@@ -2,23 +2,25 @@
 Serializers for the forms app
 """
 from rest_framework import serializers
-from .models import Form, Submission, FormTemplate
+from .models import Form, Submission, FormTemplate, FormVersion, NotificationConfig
 
 
 class FormSerializer(serializers.ModelSerializer):
     """Serializer for Form model"""
     
     conversion_rate = serializers.ReadOnlyField()
+    completion_rate = serializers.ReadOnlyField()
     
     class Meta:
         model = Form
         fields = [
             'id', 'title', 'slug', 'description', 'schema_json',
-            'settings_json', 'published_at', 'is_active',
-            'views_count', 'submissions_count', 'conversion_rate',
+            'settings_json', 'status', 'published_at', 'is_active', 'version',
+            'views_count', 'submissions_count', 'completion_count',
+            'conversion_rate', 'completion_rate',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'slug', 'views_count', 'submissions_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'views_count', 'submissions_count', 'completion_count', 'version', 'created_at', 'updated_at']
 
 
 class FormCreateSerializer(serializers.ModelSerializer):
@@ -78,3 +80,30 @@ class FormGenerateSerializer(serializers.Serializer):
         if not value or not value.strip():
             raise serializers.ValidationError("Prompt cannot be empty")
         return value.strip()
+
+
+class FormVersionSerializer(serializers.ModelSerializer):
+    """Serializer for FormVersion model"""
+    
+    class Meta:
+        model = FormVersion
+        fields = ['id', 'form', 'version', 'schema_json', 'settings_json', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class NotificationConfigSerializer(serializers.ModelSerializer):
+    """Serializer for NotificationConfig model"""
+    
+    class Meta:
+        model = NotificationConfig
+        fields = ['id', 'form', 'type', 'trigger', 'recipient', 'subject', 'template', 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class SubmissionExportSerializer(serializers.Serializer):
+    """Serializer for CSV export request"""
+    
+    format = serializers.ChoiceField(choices=['csv', 'json', 'xlsx'], default='csv')
+    date_from = serializers.DateTimeField(required=False, allow_null=True)
+    date_to = serializers.DateTimeField(required=False, allow_null=True)
+    fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)

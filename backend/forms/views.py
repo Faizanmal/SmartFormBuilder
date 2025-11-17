@@ -7,13 +7,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
-from .models import Form, Submission, FormTemplate
+from .models import Form, Submission, FormTemplate, FormVersion, NotificationConfig
 from .serializers import (
     FormSerializer, FormCreateSerializer, SubmissionSerializer,
-    SubmissionCreateSerializer, FormTemplateSerializer, FormGenerateSerializer
+    SubmissionCreateSerializer, FormTemplateSerializer, FormGenerateSerializer,
+    FormVersionSerializer, NotificationConfigSerializer, SubmissionExportSerializer
 )
 from .services.ai_service import FormGeneratorService
+from .services.conditional_logic import ConditionalLogicEngine
+from .services.export_service import SubmissionExporter
+from .services.notification_service import NotificationService
 from core.middleware.rate_limit import SubmissionRateLimiter
 
 
@@ -57,6 +62,46 @@ class FormViewSet(viewsets.ModelViewSet):
     def publish(self, request, pk=None):
         """Publish a form"""
         form = self.get_object()
+        
+        # Create version snapshot before publishing
+        if form.status == 'draft':
+            form.create_version()
+        
+        form.published_at = timezone.now()
+        form.is_active = True
+        form.status = 'published'
+        form.save()
+        return Response({'status': 'published', 'published_at': form.published_at, 'version': form.version})
+    
+    @action(detail=True, methods=['get'])
+    def versions(self, request, pk=None):
+        """Get version history for a form"""
+        form = self.get_object()
+        versions = form.versions.all()
+        serializer = FormVersionSerializer(versions, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def revert(self, request, pk=None):
+        """Revert form to a specific version"""
+        form = self.get_object()
+        version_id = request.data.get('version_id')
+        
+        if not version_id:
+            return Response({'error': 'version_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        version = get_object_or_404(FormVersion, id=version_id, form=form)
+        
+        # Save current state as new version before reverting
+        form.create_version()
+        
+        # Revert to selected version
+        form.schema_json = version.schema_json
+        form.settings_json = version.settings_json
+        form.save()
+        
+        return Response({'status': 'reverted', 'version': form.version})
+        form = self.get_object()
         form.published_at = timezone.now()
         form.is_active = True
         form.save()
@@ -88,18 +133,71 @@ class FormViewSet(viewsets.ModelViewSet):
         # Get submission stats by day (last 30 days)
         from django.db.models import Count
         from django.utils import timezone
-        from datetime import timedelta
+class SubmissionViewSet(viewsets.ModelViewSet):
+    """ViewSet for Submission operations"""
+    
+    serializer_class = SubmissionSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        form_id = self.kwargs.get('form_pk')
+        if form_id:
+            form = get_object_or_404(Form, id=form_id, user=self.request.user)
+            return Submission.objects.filter(form=form)
+        return Submission.objects.filter(form__user=self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def export(self, request, form_pk=None):
+        """Export submissions to CSV, JSON, or XLSX"""
+        form = get_object_or_404(Form, id=form_pk, user=request.user)
         
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-        submissions = form.submissions.filter(created_at__gte=thirty_days_ago)
+        serializer = SubmissionExportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
-        return Response({
-            'views': form.views_count,
-            'submissions': form.submissions_count,
-            'conversion_rate': form.conversion_rate,
-            'recent_submissions': submissions.count(),
-            'last_submission': submissions.order_by('-created_at').first().created_at if submissions.exists() else None
-        })
+        export_format = serializer.validated_data.get('format', 'csv')
+        date_from = serializer.validated_data.get('date_from')
+        date_to = serializer.validated_data.get('date_to')
+        fields = serializer.validated_data.get('fields')
+        
+        # Query submissions
+        queryset = Submission.objects.filter(form=form)
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+        
+        # Flatten submissions
+        submissions = [SubmissionExporter.flatten_submission(s) for s in queryset]
+        
+        # Export based on format
+        if export_format == 'csv':
+            csv_data = SubmissionExporter.to_csv(submissions, fields)
+            response = HttpResponse(csv_data, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{form.slug}_submissions.csv"'
+            return response
+        
+        elif export_format == 'json':
+            json_data = SubmissionExporter.to_json(submissions)
+            response = HttpResponse(json_data, content_type='application/json')
+            response['Content-Disposition'] = f'attachment; filename="{form.slug}_submissions.json"'
+            return response
+        
+        elif export_format == 'xlsx':
+            try:
+                xlsx_data = SubmissionExporter.to_xlsx(submissions, fields)
+                response = HttpResponse(
+                    xlsx_data,
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{form.slug}_submissions.xlsx"'
+                return response
+            except ImportError:
+                return Response(
+                    {'error': 'XLSX export requires openpyxl. Please install it.'},
+                    status=status.HTTP_501_NOT_IMPLEMENTED
+                )
+        
+        return Response({'error': 'Invalid format'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FormGenerateView(viewsets.GenericViewSet):
@@ -166,13 +264,27 @@ class PublicSubmissionView(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
+        payload = serializer.validated_data['payload']
+        
+        # Validate submission with conditional logic
+        is_valid, errors = ConditionalLogicEngine.validate_submission(
+            form.schema_json,
+            payload
+        )
+        
+        if not is_valid:
+            return Response({
+                'error': 'Validation failed',
+                'errors': errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         # Get user agent
         user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
         
         # Create submission
         submission = Submission.objects.create(
             form=form,
-            payload_json=serializer.validated_data['payload'],
+            payload_json=payload,
             ip_address=ip_address,
             user_agent=user_agent
         )
@@ -180,6 +292,14 @@ class PublicSubmissionView(viewsets.GenericViewSet):
         # Increment form submission count
         form.submissions_count += 1
         form.save(update_fields=['submissions_count'])
+        
+        # Send notifications
+        try:
+            NotificationService.process_submission_notifications(submission, form)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Notification failed: {e}")
         
         # Trigger integrations (sync to Google Sheets, email, etc.)
         from integrations.services.sync_service import sync_submission_to_integrations
@@ -240,3 +360,22 @@ class FormTemplateViewSet(viewsets.ReadOnlyModelViewSet):
         template.save(update_fields=['usage_count'])
         
         return Response(FormSerializer(form).data, status=status.HTTP_201_CREATED)
+
+
+class NotificationConfigViewSet(viewsets.ModelViewSet):
+    """ViewSet for NotificationConfig CRUD"""
+    
+    serializer_class = NotificationConfigSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        form_id = self.kwargs.get('form_pk')
+        if form_id:
+            form = get_object_or_404(Form, id=form_id, user=self.request.user)
+            return NotificationConfig.objects.filter(form=form)
+        return NotificationConfig.objects.filter(form__user=self.request.user)
+    
+    def perform_create(self, serializer):
+        form_id = self.kwargs.get('form_pk')
+        form = get_object_or_404(Form, id=form_id, user=self.request.user)
+        serializer.save(form=form)

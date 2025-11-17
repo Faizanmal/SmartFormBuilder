@@ -7,7 +7,7 @@ from rest_framework_nested import routers
 
 from .views import (
     FormViewSet, FormGenerateView, SubmissionViewSet,
-    PublicSubmissionView, FormTemplateViewSet
+    PublicSubmissionView, FormTemplateViewSet, NotificationConfigViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +18,7 @@ router.register(r'generate', FormGenerateView, basename='generate')
 # Nested router for form submissions
 forms_router = routers.NestedDefaultRouter(router, r'forms', lookup='form')
 forms_router.register(r'submissions', SubmissionViewSet, basename='form-submissions')
+forms_router.register(r'notifications', NotificationConfigViewSet, basename='form-notifications')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,7 +1,21 @@
 (function (window, document) {
   'use strict';
 
-  var FormForge = {};
+  var FormForge = {
+    version: '1.1.0',
+    config: {
+      apiBaseUrl: 'https://api.formforge.io',
+      embedBaseUrl: 'https://forms.formforge.io',
+      debug: false
+    }
+  };
+
+  // Debug logger
+  function log() {
+    if (FormForge.config.debug && console && console.log) {
+      console.log.apply(console, ['[FormForge]'].concat(Array.prototype.slice.call(arguments)));
+    }
+  }
 
   function createIframe(src, attrs) {
     var iframe = document.createElement('iframe');
@@ -10,28 +24,65 @@
     iframe.style.height = attrs.height || '600px';
     iframe.style.border = attrs.border || 'none';
     iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('scrolling', 'no');
+    iframe.setAttribute('scrolling', attrs.scrolling || 'no');
+    iframe.setAttribute('allow', 'payment');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
     iframe.style.borderRadius = attrs.borderRadius || '8px';
     iframe.style.display = 'block';
     iframe.className = attrs.className || 'formforge-embed-iframe';
+    
+    // Add loading attribute for performance
+    if ('loading' in iframe) {
+      iframe.loading = 'lazy';
+    }
+    
     return iframe;
   }
 
-  function listenForHeight(iframe, origin) {
+  function listenForHeight(iframe, origin, callbacks) {
+    callbacks = callbacks || {};
+    
     function onMessage(e) {
-      if (origin && e.origin !== origin) return;
+      // Validate origin for security
+      if (origin && e.origin !== origin) {
+        log('Message from untrusted origin:', e.origin);
+        return;
+      }
+      
       try {
         var msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (msg && msg.type === 'formforge:height' && msg.height) {
+        
+        if (!msg || !msg.type) return;
+        
+        log('Received message:', msg.type, msg);
+        
+        // Handle height updates
+        if (msg.type === 'formforge:height' && msg.height) {
           iframe.style.height = msg.height + 'px';
+          if (callbacks.onResize) callbacks.onResize(msg.height);
         }
-        if (msg && msg.type === 'formforge:submitted') {
-          // bubble up to user-provided callback via custom event
+        
+        // Handle submission success
+        if (msg.type === 'formforge:submitted') {
           var ev = new CustomEvent('formforge:submitted', { detail: msg.payload || {} });
           iframe.dispatchEvent(ev);
+          if (callbacks.onSubmit) callbacks.onSubmit(msg.payload);
         }
+        
+        // Handle errors
+        if (msg.type === 'formforge:error') {
+          log('Form error:', msg.error);
+          if (callbacks.onError) callbacks.onError(msg.error);
+        }
+        
+        // Handle ready state
+        if (msg.type === 'formforge:ready') {
+          log('Form ready');
+          if (callbacks.onReady) callbacks.onReady();
+        }
+        
       } catch (err) {
-        // ignore parse errors
+        log('Error parsing message:', err);
       }
     }
 
@@ -44,47 +95,103 @@
 
   // embed into a container selector
   FormForge.embed = function (opts) {
-    // opts: { formId, slug, container (selector or element), theme, width, height, onSubmit }
-    if (!opts) return;
+    // opts: { formId, slug, container, theme, width, height, onSubmit, onReady, onError, prefill, hideFields }
+    if (!opts) {
+      log('Error: No options provided to FormForge.embed');
+      return null;
+    }
+    
     var slug = opts.slug || opts.formId;
+    if (!slug) {
+      log('Error: slug or formId is required');
+      return null;
+    }
+    
     var container = typeof opts.container === 'string' ? document.querySelector(opts.container) : opts.container;
     if (!container) {
-      console.warn('FormForge.embed: container not found');
-      return;
+      log('Error: container not found');
+      if (opts.onError) opts.onError('Container not found');
+      return null;
     }
 
-    var src = (opts.src || (window.location.origin + '/form/' + slug));
-
-    var iframe = createIframe(src, { width: opts.width || '100%', height: opts.height || '600', borderRadius: '8px' });
-
-    // allow data-theme param
-    if (opts.theme) {
-      iframe.src = src + (src.indexOf('?') === -1 ? '?' : '&') + 'theme=' + encodeURIComponent(opts.theme);
+    var baseUrl = opts.embedBaseUrl || FormForge.config.embedBaseUrl;
+    var src = opts.src || (baseUrl + '/form/' + slug);
+    
+    // Build query parameters
+    var params = [];
+    if (opts.theme) params.push('theme=' + encodeURIComponent(opts.theme));
+    if (opts.prefill) params.push('prefill=' + encodeURIComponent(JSON.stringify(opts.prefill)));
+    if (opts.hideFields) params.push('hide=' + encodeURIComponent(opts.hideFields.join(',')));
+    if (opts.transparent) params.push('transparent=1');
+    
+    if (params.length > 0) {
+      src = src + (src.indexOf('?') === -1 ? '?' : '&') + params.join('&');
     }
 
-    // clear container then append
-    container.innerHTML = '';
-    container.appendChild(iframe);
+    var iframeAttrs = {
+      width: opts.width || '100%',
+      height: opts.height || '600px',
+      borderRadius: opts.borderRadius || '8px',
+      scrolling: opts.scrolling || 'no',
+      className: opts.className || 'formforge-embed-iframe'
+    };
+    
+    var iframe = createIframe(src, iframeAttrs);
+    
+    // Show loading state
+    if (opts.showLoader !== false) {
+      var loader = document.createElement('div');
+      loader.className = 'formforge-loader';
+      loader.style.textAlign = 'center';
+      loader.style.padding = '40px';
+      loader.innerHTML = opts.loaderHtml || 'Loading form...';
+      container.appendChild(loader);
+    }
 
-    var cleanup = listenForHeight(iframe, window.location.origin);
+    // Clear container and append iframe
+    setTimeout(function() {
+      container.innerHTML = '';
+      container.appendChild(iframe);
+    }, opts.loaderDelay || 100);
 
-    // attach onSubmit
+    var callbacks = {
+      onSubmit: opts.onSubmit,
+      onReady: opts.onReady,
+      onError: opts.onError,
+      onResize: opts.onResize
+    };
+
+    var cleanup = listenForHeight(iframe, baseUrl, callbacks);
+
+    // Attach custom submit event listener
     if (typeof opts.onSubmit === 'function') {
       iframe.addEventListener('formforge:submitted', function (ev) {
         try {
           opts.onSubmit(ev.detail);
         } catch (err) {
-          // swallow
+          log('Error in onSubmit callback:', err);
         }
       });
     }
 
-    // return an API for consumer
+    // Return API for consumer
     return {
       iframe: iframe,
+      container: container,
       destroy: function () {
         cleanup();
-        if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (iframe && iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+      },
+      reload: function() {
+        iframe.src = iframe.src;
+      },
+      prefill: function(data) {
+        iframe.contentWindow.postMessage(JSON.stringify({
+          type: 'formforge:prefill',
+          data: data
+        }), baseUrl);
       }
     };
   };

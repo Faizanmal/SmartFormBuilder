@@ -7,6 +7,12 @@ import json
 class Form(models.Model):
     """Form model storing the generated form schema"""
     
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+        ('archived', 'Archived'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='forms')
     team = models.ForeignKey('users.Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='forms')
@@ -15,10 +21,13 @@ class Form(models.Model):
     description = models.TextField(blank=True)
     schema_json = models.JSONField(default=dict, help_text="Complete form schema with fields and logic")
     settings_json = models.JSONField(default=dict, help_text="Integrations, privacy, and other settings")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     published_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    version = models.IntegerField(default=1, help_text="Version number for tracking changes")
     views_count = models.IntegerField(default=0)
     submissions_count = models.IntegerField(default=0)
+    completion_count = models.IntegerField(default=0, help_text="Submissions marked as complete")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -50,6 +59,24 @@ class Form(models.Model):
         if self.views_count == 0:
             return 0
         return round((self.submissions_count / self.views_count) * 100, 2)
+    
+    @property
+    def completion_rate(self):
+        """Calculate completion rate (completed / total submissions)"""
+        if self.submissions_count == 0:
+            return 0
+        return round((self.completion_count / self.submissions_count) * 100, 2)
+    
+    def create_version(self):
+        """Create a new version of the form"""
+        FormVersion.objects.create(
+            form=self,
+            version=self.version,
+            schema_json=self.schema_json,
+            settings_json=self.settings_json
+        )
+        self.version += 1
+        self.save(update_fields=['version'])
 
 
 class Submission(models.Model):
@@ -117,3 +144,54 @@ class FormTemplate(models.Model):
         
     def __str__(self):
         return self.name
+
+
+class FormVersion(models.Model):
+    """Form version history for tracking changes"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='versions')
+    version = models.IntegerField()
+    schema_json = models.JSONField()
+    settings_json = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'form_versions'
+        ordering = ['-version']
+        unique_together = ['form', 'version']
+        
+    def __str__(self):
+        return f"{self.form.title} - v{self.version}"
+
+
+class NotificationConfig(models.Model):
+    """Email/SMS notification configuration for forms"""
+    
+    NOTIFICATION_TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('sms', 'SMS'),
+        ('webhook', 'Webhook'),
+    ]
+    
+    TRIGGER_CHOICES = [
+        ('on_submit', 'On Submission'),
+        ('on_payment', 'On Payment Success'),
+        ('on_failure', 'On Payment Failure'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='notifications')
+    type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
+    trigger = models.CharField(max_length=20, choices=TRIGGER_CHOICES, default='on_submit')
+    recipient = models.CharField(max_length=500, help_text="Email address, phone number, or webhook URL")
+    subject = models.CharField(max_length=500, blank=True)
+    template = models.TextField(help_text="Email/SMS template with {{field_name}} placeholders")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'notification_configs'
+        
+    def __str__(self):
+        return f"{self.form.title} - {self.type} to {self.recipient}"
