@@ -26,6 +26,8 @@ urlpatterns = [
     path("api/v1/auth/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
     # API endpoints
     path("api/v1/", include('forms.urls')),
+    path("api/v1/", include('forms.urls_advanced')),  # Advanced features
+    path("api/v1/pwa/", include('forms.urls_pwa')),  # PWA features
     path("api/v1/users/", include('users.urls')),
     path("api/v1/integrations/", include('integrations.urls')),
 ]

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        .card-trend {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .trend-up {
+            color: #10b981;
+        }
+        .trend-down {
+            color: #ef4444;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .funnel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .funnel-step {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        .funnel-step-label {
+            font-weight: 600;
+        }
+        .funnel-step-value {
+            font-size: 18px;
+            color: #667eea;
+        }
+        .device-list {
+            list-style: none;
+            padding: 0;
+        }
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Form Analytics Report</h1>
+        <p><strong>{{ report.form.title }}</strong></p>
+        <p>{{ report.period.from }} to {{ report.period.to }}</p>
+    </div>
+
+    <div class="summary-cards">
+        <div class="card">
+            <p class="card-title">Total Views</p>
+            <p class="card-value">{{ report.summary.total_views }}</p>
+        </div>
+        <div class="card">
+            <p class="card-title">Total Submissions</p>
+            <p class="card-value">{{ report.summary.total_submissions }}</p>
+        </div>
+        <div class="card">
+            <p class="card-title">Conversion Rate</p>
+            <p class="card-value">{{ report.summary.conversion_rate }}%</p>
+        </div>
+        <div class="card">
+            <p class="card-title">Trend</p>
+            <p class="card-value">
+                <span class="{% if report.summary.trend > 0 %}trend-up{% else %}trend-down{% endif %}">
+                    {{ report.summary.trend }}%
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Conversion Funnel</h2>
+        <div class="funnel">
+            <div class="funnel-step">
+                <span class="funnel-step-label">👁️ Views</span>
+                <span class="funnel-step-value">{{ report.funnel.views }}</span>
+            </div>
+            <div class="funnel-step">
+                <span class="funnel-step-label">▶️ Started</span>
+                <span class="funnel-step-value">{{ report.funnel.starts }} ({{ report.funnel.view_to_start_rate }}%)</span>
+            </div>
+            <div class="funnel-step">
+                <span class="funnel-step-label">✅ Submitted</span>
+                <span class="funnel-step-value">{{ report.funnel.submits }} ({{ report.funnel.start_to_submit_rate }}%)</span>
+            </div>
+        </div>
+        <p style="margin-top: 15px; color: #666;">
+            <strong>Drop-off:</strong> {{ report.funnel.drop_off_at_start }} users never started, 
+            {{ report.funnel.drop_off_after_start }} users started but didn't submit
+        </p>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Device Breakdown</h2>
+        <ul class="device-list">
+            {% for device in report.devices %}
+            <li class="device-item">
+                <span>{{ device.device_type|title }}</span>
+                <span><strong>{{ device.count }}</strong> ({{ device.percentage }}%)</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if include_charts %}
+    <div class="section">
+        <h2 class="section-title">Field Analytics</h2>
+        <p>View detailed field completion rates, drop-off points, and time spent in your dashboard.</p>
+        <a href="https://yourapp.com/analytics/{{ report.form.id }}" class="button">View Full Analytics</a>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>This is an automated report generated by SmartFormBuilder</p>
+        <p>Full report data is attached as JSON</p>
+        <p>&copy; 2024 SmartFormBuilder. All rights reserved.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+Complete Your Submission - {{ form_title }}
+
+Hi there,
+
+We noticed you started filling out {{ form_title }} but didn't finish. Your progress has been saved!
+
+You've completed {{ progress }}% of the form (Step {{ current_step }} of {{ total_steps }}).
+
+We'd love for you to complete your submission. Click the link below to pick up right where you left off:
+
+{{ resume_url }}
+
+This link will expire in {{ expiry_hours }} hours for your security.
+
+If you have any questions, feel free to reply to this email.
+
+Best regards,
+The Team
+
+---
+This is an automated message.
