@@ -195,3 +195,90 @@ class NotificationConfig(models.Model):
         
     def __str__(self):
         return f"{self.form.title} - {self.type} to {self.recipient}"
+
+
+class FormDraft(models.Model):
+    """Save and resume functionality - stores partial form submissions"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='drafts')
+    draft_token = models.CharField(max_length=64, unique=True, db_index=True)
+    payload_json = models.JSONField(default=dict, help_text="Partial submission data")
+    current_step = models.IntegerField(default=0, help_text="Current step in multi-step form")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    email = models.EmailField(blank=True, help_text="Email to send resume link")
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'form_drafts'
+        indexes = [
+            models.Index(fields=['draft_token']),
+            models.Index(fields=['form', 'expires_at']),
+        ]
+        
+    def __str__(self):
+        return f"Draft for {self.form.title} - {self.draft_token[:8]}..."
+    
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        return self.expires_at < timezone.now()
+
+
+class FormVariant(models.Model):
+    """A/B testing variant of a form"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='variants')
+    name = models.CharField(max_length=255)
+    schema_json = models.JSONField(help_text="Variant form schema")
+    traffic_percentage = models.IntegerField(default=50, help_text="Percentage of traffic to this variant")
+    views_count = models.IntegerField(default=0)
+    submissions_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'form_variants'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.form.title} - Variant: {self.name}"
+    
+    @property
+    def conversion_rate(self):
+        if self.views_count == 0:
+            return 0
+        return round((self.submissions_count / self.views_count) * 100, 2)
+
+
+class ABTest(models.Model):
+    """A/B test configuration"""
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('running', 'Running'),
+        ('paused', 'Paused'),
+        ('completed', 'Completed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='ab_tests')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    winner_variant = models.ForeignKey(FormVariant, on_delete=models.SET_NULL, null=True, blank=True, related_name='won_tests')
+    started_at = models.DateTimeField(null=True, blank=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'ab_tests'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"A/B Test: {self.name} for {self.form.title}"

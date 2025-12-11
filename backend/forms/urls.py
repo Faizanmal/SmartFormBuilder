@@ -7,7 +7,8 @@ from rest_framework_nested import routers
 
 from .views import (
     FormViewSet, FormGenerateView, SubmissionViewSet,
-    PublicSubmissionView, FormTemplateViewSet, NotificationConfigViewSet
+    PublicSubmissionView, FormTemplateViewSet, NotificationConfigViewSet,
+    FormDraftView, PublicFormView
 )
 
 router = DefaultRouter()
@@ -25,4 +26,10 @@ urlpatterns = [
     path('', include(forms_router.urls)),
     # Public submission endpoint (no auth)
     path('public/submit/<slug:form_slug>/', PublicSubmissionView.as_view({'post': 'create'}), name='public-submit'),
+    # Public form endpoint (no auth)
+    path('public/form/<slug:slug>/', PublicFormView.as_view({'get': 'retrieve'}), name='public-form'),
+    # Form draft endpoints (no auth - save & resume)
+    path('public/draft/<slug:form_slug>/', FormDraftView.as_view({'post': 'create'}), name='public-draft-create'),
+    path('public/draft/token/<str:draft_token>/', FormDraftView.as_view({'get': 'retrieve'}), name='public-draft-get'),
+    path('public/draft/token/<str:draft_token>/send-link/', FormDraftView.as_view({'post': 'send_resume_link'}), name='public-draft-send-link'),
 ]

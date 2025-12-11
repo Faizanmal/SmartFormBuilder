@@ -107,3 +107,71 @@ class SubmissionExportSerializer(serializers.Serializer):
     date_from = serializers.DateTimeField(required=False, allow_null=True)
     date_to = serializers.DateTimeField(required=False, allow_null=True)
     fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
+
+
+class FormDraftSerializer(serializers.ModelSerializer):
+    """Serializer for FormDraft model - save and resume"""
+    
+    is_expired = serializers.ReadOnlyField()
+    
+    class Meta:
+        from .models import FormDraft
+        model = FormDraft
+        fields = [
+            'id', 'form', 'draft_token', 'payload_json', 'current_step',
+            'email', 'expires_at', 'is_expired', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'draft_token', 'is_expired', 'created_at', 'updated_at']
+
+
+class FormDraftCreateSerializer(serializers.Serializer):
+    """Serializer for creating/updating form drafts"""
+    
+    payload = serializers.JSONField()
+    current_step = serializers.IntegerField(default=0)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    
+    def validate_payload(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Payload must be a JSON object")
+        return value
+
+
+class FormVariantSerializer(serializers.ModelSerializer):
+    """Serializer for FormVariant model - A/B testing"""
+    
+    conversion_rate = serializers.ReadOnlyField()
+    
+    class Meta:
+        from .models import FormVariant
+        model = FormVariant
+        fields = [
+            'id', 'form', 'name', 'schema_json', 'traffic_percentage',
+            'views_count', 'submissions_count', 'conversion_rate',
+            'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'views_count', 'submissions_count', 'created_at', 'updated_at']
+
+
+class ABTestSerializer(serializers.ModelSerializer):
+    """Serializer for ABTest model"""
+    
+    variants = FormVariantSerializer(source='form.variants', many=True, read_only=True)
+    
+    class Meta:
+        from .models import ABTest
+        model = ABTest
+        fields = [
+            'id', 'form', 'name', 'description', 'status', 'variants',
+            'winner_variant', 'started_at', 'ended_at', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'winner_variant', 'started_at', 'ended_at', 'created_at', 'updated_at']
+
+
+class AnalyticsFilterSerializer(serializers.Serializer):
+    """Serializer for analytics query filters"""
+    
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    step = serializers.IntegerField(required=False)
+    group_by = serializers.ChoiceField(choices=['day', 'week', 'month'], default='day')

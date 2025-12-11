@@ -379,3 +379,190 @@ class NotificationConfigViewSet(viewsets.ModelViewSet):
         form_id = self.kwargs.get('form_pk')
         form = get_object_or_404(Form, id=form_id, user=self.request.user)
         serializer.save(form=form)
+
+
+class FormDraftView(viewsets.GenericViewSet):
+    """Public API for form drafts - save and resume functionality"""
+    
+    permission_classes = [AllowAny]
+    
+    def get_client_ip(self, request):
+        """Get client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    def retrieve(self, request, draft_token=None):
+        """Get draft by token"""
+        from .models import FormDraft
+        from .serializers import FormDraftSerializer
+        
+        draft = get_object_or_404(FormDraft, draft_token=draft_token)
+        
+        if draft.is_expired:
+            return Response(
+                {'error': 'This draft has expired'},
+                status=status.HTTP_410_GONE
+            )
+        
+        serializer = FormDraftSerializer(draft)
+        return Response(serializer.data)
+    
+    def create(self, request, form_slug=None):
+        """Create or update a draft"""
+        from .models import FormDraft
+        from .serializers import FormDraftCreateSerializer, FormDraftSerializer
+        import secrets
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        form = get_object_or_404(Form, slug=form_slug, is_active=True)
+        
+        # Check if save & resume is enabled
+        if not form.settings_json.get('allowSaveAndResume', True):
+            return Response(
+                {'error': 'Save and resume is not enabled for this form'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = FormDraftCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        draft_token = request.data.get('draft_token')
+        payload = serializer.validated_data['payload']
+        current_step = serializer.validated_data.get('current_step', 0)
+        email = serializer.validated_data.get('email', '')
+        
+        # Get expiration days from form settings (default 7 days)
+        expiration_days = form.settings_json.get('resumeExpirationDays', 7)
+        expires_at = timezone.now() + timedelta(days=expiration_days)
+        
+        if draft_token:
+            # Update existing draft
+            draft = FormDraft.objects.filter(draft_token=draft_token, form=form).first()
+            if draft and not draft.is_expired:
+                draft.payload_json = payload
+                draft.current_step = current_step
+                if email:
+                    draft.email = email
+                draft.expires_at = expires_at
+                draft.save()
+            else:
+                # Create new draft if old one not found or expired
+                draft = FormDraft.objects.create(
+                    form=form,
+                    draft_token=secrets.token_urlsafe(32),
+                    payload_json=payload,
+                    current_step=current_step,
+                    email=email,
+                    ip_address=self.get_client_ip(request),
+                    expires_at=expires_at
+                )
+        else:
+            # Create new draft
+            draft = FormDraft.objects.create(
+                form=form,
+                draft_token=secrets.token_urlsafe(32),
+                payload_json=payload,
+                current_step=current_step,
+                email=email,
+                ip_address=self.get_client_ip(request),
+                expires_at=expires_at
+            )
+        
+        response_serializer = FormDraftSerializer(draft)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['post'], url_path='send-link')
+    def send_resume_link(self, request, draft_token=None):
+        """Send resume link via email"""
+        from .models import FormDraft
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        draft = get_object_or_404(FormDraft, draft_token=draft_token)
+        
+        if draft.is_expired:
+            return Response(
+                {'error': 'This draft has expired'},
+                status=status.HTTP_410_GONE
+            )
+        
+        email = request.data.get('email', draft.email)
+        if not email:
+            return Response(
+                {'error': 'Email address is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update draft email
+        draft.email = email
+        draft.save(update_fields=['email'])
+        
+        # Build resume link
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        resume_link = f"{frontend_url}/form/{draft.form.slug}?draft={draft.draft_token}"
+        
+        # Send email
+        try:
+            send_mail(
+                subject=f"Resume your form: {draft.form.title}",
+                message=f"""
+Hi,
+
+You saved your progress on "{draft.form.title}".
+
+Click here to continue where you left off:
+{resume_link}
+
+This link will expire on {draft.expires_at.strftime('%B %d, %Y')}.
+
+Best regards,
+FormForge
+                """,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to send email: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({'message': 'Resume link sent successfully'})
+
+
+class PublicFormView(viewsets.GenericViewSet):
+    """Public API for getting form by slug (no auth required)"""
+    
+    permission_classes = [AllowAny]
+    
+    def retrieve(self, request, slug=None):
+        """Get form by slug for public rendering"""
+        form = get_object_or_404(Form, slug=slug, is_active=True)
+        
+        # Increment view count
+        form.views_count += 1
+        form.save(update_fields=['views_count'])
+        
+        # Return form data (limited fields for public)
+        return Response({
+            'id': str(form.id),
+            'title': form.title,
+            'slug': form.slug,
+            'description': form.description,
+            'schema_json': form.schema_json,
+            'settings_json': {
+                'consent_text': form.settings_json.get('consent_text', ''),
+                'redirect': form.settings_json.get('redirect', ''),
+                'multiStep': form.settings_json.get('multiStep', False),
+                'steps': form.settings_json.get('steps', []),
+                'showProgressBar': form.settings_json.get('showProgressBar', True),
+                'allowSaveAndResume': form.settings_json.get('allowSaveAndResume', False),
+            },
+            'published_at': form.published_at,
+        })

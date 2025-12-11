@@ -20,12 +20,15 @@ export interface FieldValidation {
   max?: number;
   pattern?: string;
   required?: boolean;
+  accept?: string; // For file fields (e.g., 'image/*,.pdf')
+  maxSize?: number; // Max file size in bytes
 }
 
 export interface FormField {
   id: string;
   type: 'text' | 'email' | 'phone' | 'textarea' | 'number' | 'date' | 'time' | 
-        'select' | 'multiselect' | 'checkbox' | 'radio' | 'file' | 'url' | 'payment';
+        'select' | 'multiselect' | 'checkbox' | 'radio' | 'file' | 'url' | 'payment' |
+        'slider' | 'rating' | 'signature' | 'calculated' | 'address' | 'heading' | 'divider';
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -36,6 +39,34 @@ export interface FormField {
   // Payment field specific
   amount?: number;  // Amount in cents
   currency?: string;  // USD, EUR, etc.
+  
+  // Slider field specific
+  sliderMin?: number;
+  sliderMax?: number;
+  sliderStep?: number;
+  showValue?: boolean;
+  
+  // Rating field specific
+  maxRating?: number;  // Default 5
+  ratingIcon?: 'star' | 'heart' | 'thumbsup';
+  
+  // Calculated field specific
+  formula?: string;  // e.g., "{field_1} * {field_2} + 100"
+  displayFormat?: 'number' | 'currency' | 'percentage';
+  
+  // File field specific
+  allowMultiple?: boolean;
+  maxFiles?: number;
+  
+  // Address field specific
+  includeCountry?: boolean;
+  includeZip?: boolean;
+  
+  // Heading/Divider specific
+  headingLevel?: 'h1' | 'h2' | 'h3' | 'h4';
+  
+  // Step assignment for multi-step forms
+  step?: number;
 }
 
 export interface ConditionalLogic {
@@ -57,6 +88,21 @@ export interface FormSettings {
     email?: boolean;
     stripe?: boolean;
   };
+  // Multi-step form settings
+  multiStep?: boolean;
+  steps?: FormStep[];
+  showProgressBar?: boolean;
+  allowSkip?: boolean;
+  // Save & Resume settings
+  allowSaveAndResume?: boolean;
+  resumeExpirationDays?: number;
+}
+
+export interface FormStep {
+  id: string;
+  title: string;
+  description?: string;
+  fields: string[]; // Array of field IDs in this step
 }
 
 export interface FormSchema {
@@ -79,6 +125,21 @@ export interface Form {
   views_count: number;
   submissions_count: number;
   conversion_rate: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Form draft for save & resume functionality
+export interface FormDraft {
+  id: string;
+  form: string;
+  form_slug?: string;
+  draft_token: string;
+  payload_json: Record<string, unknown>;
+  current_step: number;
+  email?: string;
+  expires_at: string;
+  is_expired: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -151,4 +212,41 @@ export interface Analytics {
   conversion_rate: number;
   recent_submissions: number;
   last_submission: string | null;
+  // Enhanced analytics
+  submissions_by_day?: { date: string; count: number }[];
+  field_completion?: { field_id: string; field_label: string; completion_rate: number }[];
+  avg_completion_time?: number; // in seconds
+  drop_off_rates?: { step: number; rate: number }[];
+}
+
+export interface AnalyticsFilters {
+  date_from?: string;
+  date_to?: string;
+  step?: number;
+}
+
+// A/B Testing types
+export interface FormVariant {
+  id: string;
+  form_id: string;
+  name: string;
+  schema_json: FormSchema;
+  traffic_percentage: number;
+  views_count: number;
+  submissions_count: number;
+  conversion_rate: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ABTest {
+  id: string;
+  form_id: string;
+  name: string;
+  status: 'draft' | 'running' | 'completed';
+  variants: FormVariant[];
+  winner_variant_id?: string;
+  started_at?: string;
+  ended_at?: string;
+  created_at: string;
 }

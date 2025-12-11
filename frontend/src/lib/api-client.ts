@@ -13,7 +13,11 @@ import type {
   RegisterData,
   FormGenerateRequest,
   Analytics,
-  AuthTokens
+  AnalyticsFilters,
+  AuthTokens,
+  FormDraft,
+  FormVariant,
+  ABTest
 } from '@/types';
 
 // Auth API
@@ -51,6 +55,11 @@ export const formsApi = {
     return response.data;
   },
 
+  getBySlug: async (slug: string): Promise<Form> => {
+    const response = await apiClient.get(`/public/form/${slug}/`);
+    return response.data;
+  },
+
   create: async (data: {
     title?: string;
     description?: string;
@@ -81,13 +90,24 @@ export const formsApi = {
     return response.data;
   },
 
-  getAnalytics: async (id: string): Promise<Analytics> => {
-    const response = await apiClient.get(`/forms/${id}/analytics/`);
+  getAnalytics: async (id: string, filters?: AnalyticsFilters): Promise<Analytics> => {
+    const response = await apiClient.get(`/forms/${id}/analytics/`, { params: filters });
     return response.data;
   },
 
   generate: async (request: FormGenerateRequest): Promise<FormSchema> => {
     const response = await apiClient.post('/generate/', request);
+    return response.data;
+  },
+
+  // Version history
+  getVersions: async (id: string): Promise<any[]> => {
+    const response = await apiClient.get(`/forms/${id}/versions/`);
+    return response.data;
+  },
+
+  revertToVersion: async (id: string, versionId: string): Promise<Form> => {
+    const response = await apiClient.post(`/forms/${id}/revert/`, { version_id: versionId });
     return response.data;
   },
 };
@@ -107,6 +127,15 @@ export const submissionsApi = {
   // Public submission (no auth)
   submit: async (slug: string, payload: Record<string, any>): Promise<{ id: string; message: string; redirect: string }> => {
     const response = await apiClient.post(`/public/submit/${slug}/`, { payload });
+    return response.data;
+  },
+};
+
+// Public Form API (no auth required)
+export const publicFormApi = {
+  // Get form by slug for public rendering
+  get: async (slug: string): Promise<Form> => {
+    const response = await apiClient.get(`/public/form/${slug}/`);
     return response.data;
   },
 };
@@ -185,5 +214,85 @@ export const integrationsApi = {
   retryWebhook: async (logId: string): Promise<{ status: string }> => {
     const response = await apiClient.post(`/integrations/webhook-logs/${logId}/retry/`);
     return response.data;
+  },
+};
+
+// Form Drafts API - Save and Resume
+export const draftsApi = {
+  // Get draft by token (public)
+  get: async (token: string): Promise<FormDraft> => {
+    const response = await apiClient.get(`/public/draft/token/${token}/`);
+    return response.data;
+  },
+
+  // Save or update draft (public)
+  save: async (slug: string, data: {
+    payload: Record<string, any>;
+    current_step?: number;
+    email?: string;
+    draft_token?: string;
+  }): Promise<FormDraft> => {
+    const response = await apiClient.post(`/public/draft/${slug}/`, data);
+    return response.data;
+  },
+
+  // Send resume link via email
+  sendResumeLink: async (token: string, email: string): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/public/draft/token/${token}/send-link/`, { email });
+    return response.data;
+  },
+};
+
+// A/B Testing API
+export const abTestApi = {
+  // List all A/B tests for a form
+  list: async (formId: string): Promise<ABTest[]> => {
+    const response = await apiClient.get(`/forms/${formId}/ab-tests/`);
+    return response.data.results || response.data;
+  },
+
+  // Get single A/B test
+  get: async (formId: string, testId: string): Promise<ABTest> => {
+    const response = await apiClient.get(`/forms/${formId}/ab-tests/${testId}/`);
+    return response.data;
+  },
+
+  // Create A/B test
+  create: async (formId: string, data: { name: string; description?: string }): Promise<ABTest> => {
+    const response = await apiClient.post(`/forms/${formId}/ab-tests/`, data);
+    return response.data;
+  },
+
+  // Start A/B test
+  start: async (formId: string, testId: string): Promise<ABTest> => {
+    const response = await apiClient.post(`/forms/${formId}/ab-tests/${testId}/start/`);
+    return response.data;
+  },
+
+  // End A/B test
+  end: async (formId: string, testId: string): Promise<ABTest> => {
+    const response = await apiClient.post(`/forms/${formId}/ab-tests/${testId}/end/`);
+    return response.data;
+  },
+
+  // Create variant
+  createVariant: async (formId: string, data: {
+    name: string;
+    schema_json: FormSchema;
+    traffic_percentage?: number;
+  }): Promise<FormVariant> => {
+    const response = await apiClient.post(`/forms/${formId}/variants/`, data);
+    return response.data;
+  },
+
+  // Update variant
+  updateVariant: async (formId: string, variantId: string, data: Partial<FormVariant>): Promise<FormVariant> => {
+    const response = await apiClient.patch(`/forms/${formId}/variants/${variantId}/`, data);
+    return response.data;
+  },
+
+  // Delete variant
+  deleteVariant: async (formId: string, variantId: string): Promise<void> => {
+    await apiClient.delete(`/forms/${formId}/variants/${variantId}/`);
   },
 };

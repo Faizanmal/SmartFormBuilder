@@ -3,14 +3,37 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formsApi, submissionsApi } from "@/lib/api-client";
-import type { Form, FormField, Submission, Analytics } from "@/types";
+import type { Form, FormField, Submission, Analytics, AnalyticsFilters } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Download, Eye, FileText, TrendingUp, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calender";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { BarChart3, Download, Eye, FileText, TrendingUp, Calendar as CalendarIcon, Filter, RefreshCw, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { cn } from "@/lib/utils";
+
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c43', '#665191', '#2f4b7c', '#a05195', '#d45087'];
+
+const DATE_PRESETS = [
+  { label: 'Last 7 days', days: 7 },
+  { label: 'Last 14 days', days: 14 },
+  { label: 'Last 30 days', days: 30 },
+  { label: 'Last 90 days', days: 90 },
+];
 
 export default function FormAnalyticsPage() {
   const params = useParams();
@@ -20,17 +43,34 @@ export default function FormAnalyticsPage() {
   const [form, setForm] = useState<Form | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Date filter state
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(subDays(new Date(), 30));
+  const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  
+  // Submission detail modal
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
   useEffect(() => {
     loadData();
   }, [formId]);
 
+  useEffect(() => {
+    filterSubmissions();
+  }, [submissions, dateFrom, dateTo]);
+
   const loadData = async () => {
     try {
+      const filters: AnalyticsFilters = {};
+      if (dateFrom) filters.date_from = format(dateFrom, 'yyyy-MM-dd');
+      if (dateTo) filters.date_to = format(dateTo, 'yyyy-MM-dd');
+      
       const [formData, analyticsData, submissionsData] = await Promise.all([
         formsApi.get(formId),
-        formsApi.getAnalytics(formId),
+        formsApi.getAnalytics(formId, filters),
         submissionsApi.list(formId),
       ]);
       setForm(formData);
@@ -43,16 +83,68 @@ export default function FormAnalyticsPage() {
     }
   };
 
-  // Prepare chart data - submissions by day (last 30 days)
+  const filterSubmissions = () => {
+    let filtered = submissions;
+    
+    if (dateFrom) {
+      filtered = filtered.filter(s => new Date(s.created_at) >= startOfDay(dateFrom));
+    }
+    if (dateTo) {
+      filtered = filtered.filter(s => new Date(s.created_at) <= endOfDay(dateTo));
+    }
+    
+    setFilteredSubmissions(filtered);
+  };
+
+  const applyDatePreset = (days: number) => {
+    setDateFrom(subDays(new Date(), days));
+    setDateTo(new Date());
+  };
+
+  const clearFilters = () => {
+    setDateFrom(subDays(new Date(), 30));
+    setDateTo(new Date());
+  };
+
+  // Calculate comparison with previous period
+  const getComparisonData = () => {
+    if (!dateFrom || !dateTo) return null;
+    
+    const currentPeriodDays = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24));
+    const previousPeriodStart = subDays(dateFrom, currentPeriodDays);
+    const previousPeriodEnd = subDays(dateFrom, 1);
+    
+    const currentPeriodSubmissions = filteredSubmissions.length;
+    const previousPeriodSubmissions = submissions.filter(s => {
+      const date = new Date(s.created_at);
+      return date >= previousPeriodStart && date <= previousPeriodEnd;
+    }).length;
+    
+    const change = previousPeriodSubmissions > 0 
+      ? ((currentPeriodSubmissions - previousPeriodSubmissions) / previousPeriodSubmissions * 100).toFixed(1)
+      : currentPeriodSubmissions > 0 ? '100' : '0';
+    
+    return {
+      current: currentPeriodSubmissions,
+      previous: previousPeriodSubmissions,
+      change: parseFloat(change),
+      isPositive: parseFloat(change) >= 0
+    };
+  };
+
+  // Prepare chart data - submissions by day
   const getSubmissionsByDay = () => {
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
+    if (!dateFrom || !dateTo) return [];
+    
+    const days = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dates = Array.from({ length: Math.min(days, 90) }, (_, i) => {
+      const date = new Date(dateFrom);
+      date.setDate(date.getDate() + i);
       return date.toISOString().split('T')[0];
     });
 
-    const submissionCounts = last30Days.map(date => {
-      const count = submissions.filter(s => 
+    const submissionCounts = dates.map(date => {
+      const count = filteredSubmissions.filter(s => 
         s.created_at.split('T')[0] === date
       ).length;
       
@@ -67,25 +159,48 @@ export default function FormAnalyticsPage() {
 
   // Field completion analysis
   const getFieldCompletion = () => {
-    if (!form || submissions.length === 0) return [];
+    if (!form || filteredSubmissions.length === 0) return [];
 
     return form.schema_json.fields.map((field: FormField) => {
-      const completedCount = submissions.filter(s => 
+      const completedCount = filteredSubmissions.filter(s => 
         s.payload_json[field.id] !== undefined && s.payload_json[field.id] !== ''
       ).length;
       
-      const completionRate = ((completedCount / submissions.length) * 100).toFixed(1);
+      const completionRate = ((completedCount / filteredSubmissions.length) * 100).toFixed(1);
 
       return {
         field: field.label.length > 20 ? field.label.substring(0, 20) + '...' : field.label,
-        rate: parseFloat(completionRate)
+        fullLabel: field.label,
+        rate: parseFloat(completionRate),
+        count: completedCount,
+        total: filteredSubmissions.length
       };
-    }).slice(0, 8); // Show top 8 fields
+    }).slice(0, 10);
+  };
+
+  // Field value distribution for select/radio fields
+  const getFieldDistribution = (fieldId: string) => {
+    const field = form?.schema_json.fields.find(f => f.id === fieldId);
+    if (!field || !field.options) return [];
+
+    const distribution = field.options.map(option => {
+      const count = filteredSubmissions.filter(s => {
+        const value = s.payload_json[fieldId];
+        return Array.isArray(value) ? value.includes(option) : value === option;
+      }).length;
+      
+      return {
+        name: option,
+        value: count,
+        percentage: filteredSubmissions.length > 0 ? ((count / filteredSubmissions.length) * 100).toFixed(1) : '0'
+      };
+    });
+
+    return distribution;
   };
 
   const exportToCSV = () => {
-    if (!form || submissions.length === 0) return;
-
+    if (!form || filteredSubmissions.length === 0) return;
     // Get all unique field IDs
     const fieldIds = form.schema_json.fields.map((f: FormField) => f.id);
     const fieldLabels = form.schema_json.fields.reduce((acc: Record<string, string>, f: FormField) => {
@@ -97,7 +212,7 @@ export default function FormAnalyticsPage() {
     const headers = ['Submission ID', 'Created At', ...fieldIds.map((id: string) => fieldLabels[id])];
     
     // Create CSV rows
-    const rows = submissions.map((sub: Submission) => [
+    const rows = filteredSubmissions.map((sub: Submission) => [
       sub.id,
       new Date(sub.created_at).toLocaleString(),
       ...fieldIds.map(id => {
@@ -118,12 +233,17 @@ export default function FormAnalyticsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${form.slug}-submissions.csv`;
+    link.download = `${form.slug}-submissions-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     URL.revokeObjectURL(url);
 
-    toast.success("CSV exported successfully!");
+    toast.success(`Exported ${filteredSubmissions.length} submissions!`);
   };
+
+  const comparisonData = getComparisonData();
+  const selectFields = form?.schema_json.fields.filter(f => 
+    f.type === 'select' || f.type === 'radio' || f.type === 'multiselect'
+  ) || [];
 
   if (loading) {
     return (
@@ -146,6 +266,64 @@ export default function FormAnalyticsPage() {
         <p className="text-muted-foreground">Analytics & Submissions</p>
       </div>
 
+      {/* Date Filter */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Date Range:</span>
+            </div>
+            
+            {/* Quick presets */}
+            <div className="flex flex-wrap gap-2">
+              {DATE_PRESETS.map((preset) => (
+                <Button
+                  key={preset.days}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyDatePreset(preset.days)}
+                  className={cn(
+                    dateFrom && dateTo && 
+                    Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24)) === preset.days
+                      ? "bg-primary text-primary-foreground"
+                      : ""
+                  )}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Custom date range */}
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={dateFrom ? format(dateFrom, 'yyyy-MM-dd') : ''}
+                onChange={(e) => setDateFrom(e.target.value ? new Date(e.target.value) : undefined)}
+                className="w-36"
+              />
+              <span className="text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={dateTo ? format(dateTo, 'yyyy-MM-dd') : ''}
+                onChange={(e) => setDateTo(e.target.value ? new Date(e.target.value) : undefined)}
+                className="w-36"
+              />
+            </div>
+            
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Reset
+            </Button>
+            
+            <div className="ml-auto text-sm text-muted-foreground">
+              Showing {filteredSubmissions.length} of {submissions.length} submissions
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -156,21 +334,31 @@ export default function FormAnalyticsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{analytics?.views || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Form page visits
+              All time views
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Submissions</CardTitle>
+            <CardTitle className="text-sm font-medium">Submissions (Period)</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.submissions || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Total responses
-            </p>
+            <div className="text-2xl font-bold">{filteredSubmissions.length}</div>
+            {comparisonData && (
+              <p className={cn(
+                "text-xs flex items-center gap-1",
+                comparisonData.isPositive ? "text-green-600" : "text-red-600"
+              )}>
+                {comparisonData.isPositive ? (
+                  <ArrowUpRight className="h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3" />
+                )}
+                {Math.abs(comparisonData.change)}% vs previous period
+              </p>
+            )}
           </CardContent>
         </Card>
 
