@@ -1,7 +1,6 @@
 """
 A/B Testing service for form optimization
 """
-import random
 from django.utils import timezone
 from django.db.models import F
 

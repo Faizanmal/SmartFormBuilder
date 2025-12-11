@@ -15,6 +15,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Webhook, Mail, Sheet, CreditCard, Plus, Trash2, CheckCircle, XCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
 
+interface WebhookLog {
+  id: string;
+  created_at: string;
+  status: string;
+  response_code: number;
+  response_body: string;
+}
+
 export default function FormIntegrationsPage() {
   const params = useParams();
   const router = useRouter();
@@ -22,7 +30,7 @@ export default function FormIntegrationsPage() {
 
   const [form, setForm] = useState<Form | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [webhookLogs, setWebhookLogs] = useState<any[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingSheets, setConnectingSheets] = useState(false);
 
@@ -49,9 +57,9 @@ export default function FormIntegrationsPage() {
 
       // Load existing integrations into state
       const webhook = integrationsData.find(i => i.integration_type === "webhook");
-      if (webhook) {
-        setWebhookUrl(webhook.config.url || "");
-        setWebhookSecret(webhook.config.secret || "");
+      if (webhook && webhook.config) {
+        setWebhookUrl((webhook.config as Record<string, any>).url || "");
+        setWebhookSecret((webhook.config as Record<string, any>).secret || "");
         
         // Load webhook logs
         const logs = await integrationsApi.getWebhookLogs(webhook.id);
@@ -59,9 +67,9 @@ export default function FormIntegrationsPage() {
       }
 
       const email = integrationsData.find(i => i.integration_type === "email");
-      if (email) {
+      if (email && email.config) {
         setEmailEnabled(email.is_active);
-        setEmailRecipients(email.config.recipients?.join(", ") || "");
+        setEmailRecipients((email.config as Record<string, any>).recipients?.join(", ") || "");
       }
     } catch (error) {
       toast.error("Failed to load integrations");
@@ -361,7 +369,7 @@ is_valid = verify_webhook(
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {webhookLogs.map((log: any) => (
+                    {webhookLogs.map((log: WebhookLog) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-sm">
                           {new Date(log.created_at).toLocaleString()}

@@ -140,7 +140,7 @@ Question:"""
             question = response.choices[0].message.content.strip()
             return question
             
-        except Exception as e:
+        except Exception:
             # Fallback to default question
             return self._default_question(field)
     

@@ -2,11 +2,9 @@
 API Views for integrations app
 """
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import redirect
-from django.conf import settings
 import secrets
 
 from .models import Integration, WebhookLog

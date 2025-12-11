@@ -1,7 +1,7 @@
 /**
  * API Client for SyncQuote Backend
  */
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { User } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -45,12 +45,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as any;
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
     // Handle rate limiting (429)
     if (error.response?.status === 429) {
-      const retryAfter = (error.response.data as any)?.retry_after || 60;
-      const message = (error.response.data as any)?.message || 'Too many requests. Please try again later.';
+      const errData = error.response.data as Record<string, unknown> | undefined;
+      const retryAfter = errData && typeof errData['retry_after'] === 'number' ? (errData['retry_after'] as number) : 60;
+      const message = errData && typeof errData['message'] === 'string' ? (errData['message'] as string) : 'Too many requests. Please try again later.';
       
       // You can integrate with your toast/notification system here
       console.warn(`Rate limit exceeded: ${message}`);

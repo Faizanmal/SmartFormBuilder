@@ -2,11 +2,9 @@
 Advanced field types and validation service
 """
 import re
-import os
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.conf import settings
 
 
 class AdvancedFieldService:
@@ -50,7 +48,7 @@ class AdvancedFieldService:
                     try:
                         result = true_val if eval(condition) else false_val
                         expression = expression.replace(if_match.group(0), str(result))
-                    except:
+                    except Exception:
                         pass
             
             # Evaluate final expression

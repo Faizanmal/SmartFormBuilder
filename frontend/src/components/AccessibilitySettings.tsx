@@ -8,10 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Eye, EyeOff, Type, Contrast, ZoomIn, Keyboard, 
-  MousePointer, Play, Pause, CheckCircle, AlertCircle 
-} from 'lucide-react';
+import { Contrast, Pause, Play, Keyboard, MousePointer, Eye, CheckCircle, AlertCircle } from 'lucide-react';
 import { 
   setupReducedMotionListener, 
   runA11yAudit,
@@ -26,41 +23,18 @@ export function AccessibilitySettings() {
   const [fontSize, setFontSize] = useState(16);
   const [keyboardNav, setKeyboardNav] = useState(true);
   const [focusIndicator, setFocusIndicator] = useState(true);
-  const [auditResults, setAuditResults] = useState<any>(null);
-
-  useEffect(() => {
-    // Load preferences from localStorage
-    const prefs = loadPreferences();
-    setReducedMotion(prefs.reducedMotion || prefersReducedMotion());
-    setHighContrast(prefs.highContrast || prefersHighContrast());
-    setFontSize(prefs.fontSize || 16);
-    setKeyboardNav(prefs.keyboardNav !== false);
-    setFocusIndicator(prefs.focusIndicator !== false);
-
-    // Apply settings
-    applyAccessibilitySettings(prefs);
-
-    // Listen for system preference changes
-    const cleanup = setupReducedMotionListener((reduced) => {
-      if (!prefs.reducedMotion) { // Only if not manually set
-        setReducedMotion(reduced);
-        applyMotionPreference(reduced);
-      }
-    });
-
-    return cleanup;
-  }, []);
+  const [auditResults, setAuditResults] = useState<{ valid: boolean; issues: Array<{ category: string; issues: string[] }> } | null>(null);
 
   const loadPreferences = () => {
     const saved = localStorage.getItem('a11yPreferences');
     return saved ? JSON.parse(saved) : {};
   };
 
-  const savePreferences = (prefs: any) => {
+  const savePreferences = (prefs: Record<string, unknown>) => {
     localStorage.setItem('a11yPreferences', JSON.stringify(prefs));
   };
 
-  const applyAccessibilitySettings = (prefs: any) => {
+  const applyAccessibilitySettings = (prefs: Record<string, unknown>) => {
     const root = document.documentElement;
 
     // Font size
@@ -92,6 +66,29 @@ export function AccessibilitySettings() {
       root.style.removeProperty('--motion-reduce');
     }
   };
+
+  useEffect(() => {
+    // Load preferences from localStorage
+    const prefs = loadPreferences();
+    setReducedMotion(prefs.reducedMotion || prefersReducedMotion());
+    setHighContrast(prefs.highContrast || prefersHighContrast());
+    setFontSize(prefs.fontSize || 16);
+    setKeyboardNav(prefs.keyboardNav !== false);
+    setFocusIndicator(prefs.focusIndicator !== false);
+
+    // Apply settings
+    applyAccessibilitySettings(prefs);
+
+    // Listen for system preference changes
+    const cleanup = setupReducedMotionListener((reduced) => {
+      if (!prefs.reducedMotion) { // Only if not manually set
+        setReducedMotion(reduced);
+        applyMotionPreference(reduced);
+      }
+    });
+
+    return cleanup;
+  }, []);
 
   const handleReducedMotionToggle = (enabled: boolean) => {
     setReducedMotion(enabled);
@@ -339,7 +336,7 @@ export function AccessibilitySettings() {
 
               {!auditResults.valid && (
                 <div className="space-y-2 pl-7">
-                  {auditResults.issues.map((category: any, idx: number) => (
+                  {auditResults.issues.map((category, idx) => (
                     <div key={idx} className="text-sm">
                       <p className="font-medium">{category.category}:</p>
                       <ul className="list-disc list-inside pl-4 text-muted-foreground">

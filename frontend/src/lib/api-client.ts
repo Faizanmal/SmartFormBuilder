@@ -101,7 +101,7 @@ export const formsApi = {
   },
 
   // Version history
-  getVersions: async (id: string): Promise<any[]> => {
+  getVersions: async (id: string): Promise<unknown[]> => {
     const response = await apiClient.get(`/forms/${id}/versions/`);
     return response.data;
   },
@@ -125,7 +125,7 @@ export const submissionsApi = {
   },
 
   // Public submission (no auth)
-  submit: async (slug: string, payload: Record<string, any>): Promise<{ id: string; message: string; redirect: string }> => {
+  submit: async (slug: string, payload: Record<string, unknown>): Promise<{ id: string; message: string; redirect: string }> => {
     const response = await apiClient.post(`/public/submit/${slug}/`, { payload });
     return response.data;
   },
@@ -170,7 +170,7 @@ export const integrationsApi = {
   create: async (data: {
     form: string;
     integration_type: string;
-    config: Record<string, any>;
+    config: Record<string, unknown>;
     is_active?: boolean;
   }): Promise<Integration> => {
     const response = await apiClient.post('/integrations/', data);
@@ -203,7 +203,7 @@ export const integrationsApi = {
     return response.data;
   },
 
-  getWebhookLogs: async (integrationId?: string): Promise<any[]> => {
+  getWebhookLogs: async (integrationId?: string): Promise<unknown[]> => {
     const url = integrationId 
       ? `/integrations/webhook-logs/?integration=${integrationId}`
       : '/integrations/webhook-logs/';
@@ -227,7 +227,7 @@ export const draftsApi = {
 
   // Save or update draft (public)
   save: async (slug: string, data: {
-    payload: Record<string, any>;
+    payload: Record<string, unknown>;
     current_step?: number;
     email?: string;
     draft_token?: string;

@@ -215,7 +215,8 @@ export function validateFormLabels(): { valid: boolean; issues: string[] } {
     const label = id ? document.querySelector(`label[for="${id}"]`) : null;
 
     if (!label && !ariaLabel && !ariaLabelledBy) {
-      issues.push(`Form field missing label: ${input.tagName} ${input.name || input.id || '(unnamed)'}`);
+      const fieldName = (input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name || input.id || '(unnamed)';
+      issues.push(`Form field missing label: ${input.tagName} ${fieldName}`);
     }
   });
 

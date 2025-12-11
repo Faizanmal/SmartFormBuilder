@@ -132,28 +132,6 @@ class TeamMember(models.Model):
         return f"{self.user.email} - {self.team.name} ({self.role})"
 
 
-class FormComment(models.Model):
-    """Comments and annotations on form fields"""
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='form_comments')
-    field_id = models.CharField(max_length=255, blank=True, help_text="Specific field this comment is about")
-    content = models.TextField()
-    resolved = models.BooleanField(default=False)
-    resolved_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='resolved_comments')
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'form_comments'
-        ordering = ['-created_at']
-        
-    def __str__(self):
-        return f"Comment on {self.form.title} by {self.user.email}"
-
-
 class FormShare(models.Model):
     """Sharing settings for forms with granular access control"""
     
@@ -453,3 +431,516 @@ class ScheduledReport(models.Model):
         
     def __str__(self):
         return f"{self.form.title} - {self.schedule_type} report"
+
+
+# ========================================
+# NEW AUTOMATION FEATURES MODELS
+# ========================================
+
+
+class NurturingWorkflow(models.Model):
+    """Automated lead nurturing workflow configuration"""
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('paused', 'Paused'),
+        ('archived', 'Archived'),
+    ]
+    
+    TRIGGER_CHOICES = [
+        ('submission', 'Form Submission'),
+        ('score_threshold', 'Lead Score Threshold'),
+        ('abandonment', 'Form Abandonment'),
+        ('time_delay', 'Time After Previous Action'),
+        ('webhook', 'External Webhook'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='nurturing_workflows')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    trigger_type = models.CharField(max_length=30, choices=TRIGGER_CHOICES, default='submission')
+    trigger_conditions = models.JSONField(default=dict, help_text="Conditions to trigger workflow")
+    actions = models.JSONField(default=list, help_text="List of actions in sequence")
+    is_active = models.BooleanField(default=False)
+    
+    # Statistics
+    total_triggered = models.IntegerField(default=0)
+    total_completed = models.IntegerField(default=0)
+    total_failed = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'nurturing_workflows'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Workflow: {self.name} ({self.status})"
+
+
+class WorkflowExecution(models.Model):
+    """Track individual workflow executions"""
+    
+    STATUS_CHOICES = [
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+        ('waiting', 'Waiting for delay'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workflow = models.ForeignKey(NurturingWorkflow, on_delete=models.CASCADE, related_name='executions')
+    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, null=True, blank=True, related_name='workflow_executions')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='running')
+    current_action_index = models.IntegerField(default=0)
+    context_data = models.JSONField(default=dict, help_text="Data passed between actions")
+    error_message = models.TextField(blank=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    next_action_at = models.DateTimeField(null=True, blank=True, help_text="When to execute next action")
+    
+    class Meta:
+        db_table = 'workflow_executions'
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['workflow', 'status']),
+            models.Index(fields=['next_action_at']),
+        ]
+        
+    def __str__(self):
+        return f"Execution of {self.workflow.name} - {self.status}"
+
+
+class WorkflowActionLog(models.Model):
+    """Log each action executed in a workflow"""
+    
+    ACTION_TYPE_CHOICES = [
+        ('send_email', 'Send Email'),
+        ('send_sms', 'Send SMS'),
+        ('webhook', 'Call Webhook'),
+        ('crm_sync', 'Sync to CRM'),
+        ('slack_notify', 'Slack Notification'),
+        ('assign_lead', 'Assign Lead'),
+        ('update_score', 'Update Lead Score'),
+        ('add_tag', 'Add Tag'),
+        ('delay', 'Delay'),
+        ('condition', 'Condition Check'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    execution = models.ForeignKey(WorkflowExecution, on_delete=models.CASCADE, related_name='action_logs')
+    action_type = models.CharField(max_length=30, choices=ACTION_TYPE_CHOICES)
+    action_config = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('skipped', 'Skipped'),
+    ], default='pending')
+    result_data = models.JSONField(default=dict, help_text="Response/result from action")
+    error_message = models.TextField(blank=True)
+    executed_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'workflow_action_logs'
+        ordering = ['executed_at']
+        
+    def __str__(self):
+        return f"{self.action_type} - {self.status}"
+
+
+class FormIntegration(models.Model):
+    """User-configured integrations from the marketplace"""
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Setup'),
+        ('connected', 'Connected'),
+        ('error', 'Connection Error'),
+        ('disabled', 'Disabled'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='integrations')
+    integration_id = models.CharField(max_length=100, help_text="ID from marketplace catalog")
+    name = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Authentication
+    auth_type = models.CharField(max_length=20, choices=[
+        ('oauth', 'OAuth 2.0'),
+        ('api_key', 'API Key'),
+        ('webhook', 'Webhook'),
+        ('basic', 'Basic Auth'),
+    ], default='api_key')
+    credentials = models.JSONField(default=dict, help_text="Encrypted credentials")
+    
+    # Configuration
+    config = models.JSONField(default=dict, help_text="Integration-specific settings")
+    field_mapping = models.JSONField(default=dict, help_text="Form field to integration field mapping")
+    
+    # Sync settings
+    sync_on_submit = models.BooleanField(default=True)
+    sync_on_update = models.BooleanField(default=False)
+    last_sync_at = models.DateTimeField(null=True, blank=True)
+    last_sync_status = models.CharField(max_length=20, blank=True)
+    sync_error = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'form_integrations'
+        ordering = ['-created_at']
+        unique_together = ['form', 'integration_id']
+        
+    def __str__(self):
+        return f"{self.name} for {self.form.title}"
+
+
+class AlertConfig(models.Model):
+    """Configuration for predictive analytics alerts"""
+    
+    ALERT_TYPE_CHOICES = [
+        ('submission_spike', 'Submission Spike'),
+        ('submission_drop', 'Submission Drop'),
+        ('conversion_drop', 'Conversion Rate Drop'),
+        ('abandonment_spike', 'Abandonment Spike'),
+        ('score_threshold', 'Lead Score Threshold'),
+        ('anomaly', 'Anomaly Detected'),
+        ('forecast_target', 'Forecast Target'),
+    ]
+    
+    CHANNEL_CHOICES = [
+        ('email', 'Email'),
+        ('slack', 'Slack'),
+        ('sms', 'SMS'),
+        ('webhook', 'Webhook'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='alert_configs')
+    name = models.CharField(max_length=255)
+    alert_type = models.CharField(max_length=30, choices=ALERT_TYPE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    
+    # Threshold settings
+    threshold_value = models.FloatField(default=0, help_text="Threshold to trigger alert")
+    threshold_direction = models.CharField(max_length=10, choices=[
+        ('above', 'Above'),
+        ('below', 'Below'),
+        ('change', 'Change'),
+    ], default='above')
+    comparison_period = models.CharField(max_length=20, default='day', help_text="hour, day, week, month")
+    
+    # Notification settings
+    notification_channels = ArrayField(
+        models.CharField(max_length=20, choices=CHANNEL_CHOICES),
+        default=list
+    )
+    notification_emails = ArrayField(models.EmailField(), default=list)
+    slack_webhook = models.URLField(blank=True)
+    custom_webhook = models.URLField(blank=True)
+    
+    # Alert state
+    last_triggered_at = models.DateTimeField(null=True, blank=True)
+    trigger_count = models.IntegerField(default=0)
+    cooldown_minutes = models.IntegerField(default=60, help_text="Minutes between alerts")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'alert_configs'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Alert: {self.name} ({self.alert_type})"
+
+
+class AlertHistory(models.Model):
+    """History of triggered alerts"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    alert_config = models.ForeignKey(AlertConfig, on_delete=models.CASCADE, related_name='history')
+    triggered_value = models.FloatField(help_text="The value that triggered the alert")
+    threshold_value = models.FloatField(help_text="The threshold at time of trigger")
+    message = models.TextField()
+    notifications_sent = models.JSONField(default=list, help_text="List of notification channels used")
+    acknowledged = models.BooleanField(default=False)
+    acknowledged_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'alert_history'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Alert triggered: {self.alert_config.name}"
+
+
+class VoiceDesignSession(models.Model):
+    """Session for voice-activated form design"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='voice_sessions')
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, null=True, blank=True, related_name='voice_sessions')
+    
+    session_token = models.CharField(max_length=255, unique=True)
+    current_schema = models.JSONField(default=dict, help_text="Current form schema being designed")
+    command_history = models.JSONField(default=list, help_text="List of voice commands and actions")
+    
+    is_active = models.BooleanField(default=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'voice_design_sessions'
+        ordering = ['-started_at']
+        
+    def __str__(self):
+        return f"Voice session for {self.user.email}"
+
+
+class ComplianceScan(models.Model):
+    """Record of compliance scans performed on forms"""
+    
+    SCAN_TYPE_CHOICES = [
+        ('gdpr', 'GDPR'),
+        ('wcag', 'WCAG Accessibility'),
+        ('hipaa', 'HIPAA'),
+        ('pci', 'PCI-DSS'),
+        ('ccpa', 'CCPA'),
+        ('full', 'Full Scan'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='compliance_scans')
+    scan_type = models.CharField(max_length=20, choices=SCAN_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Results
+    overall_score = models.IntegerField(default=0, help_text="0-100 compliance score")
+    issues_found = models.IntegerField(default=0)
+    issues_fixed = models.IntegerField(default=0)
+    scan_results = models.JSONField(default=dict, help_text="Detailed scan results")
+    auto_fixes_applied = models.JSONField(default=list, help_text="List of auto-fixes applied")
+    
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'compliance_scans'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.scan_type} scan for {self.form.title} - {self.overall_score}%"
+
+
+class OptimizationSuggestion(models.Model):
+    """AI-generated optimization suggestions for forms"""
+    
+    CATEGORY_CHOICES = [
+        ('conversion', 'Conversion Rate'),
+        ('completion', 'Completion Rate'),
+        ('abandonment', 'Reduce Abandonment'),
+        ('engagement', 'Engagement'),
+        ('accessibility', 'Accessibility'),
+        ('performance', 'Performance'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('applied', 'Applied'),
+        ('dismissed', 'Dismissed'),
+        ('testing', 'In A/B Test'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='optimization_suggestions')
+    
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    expected_impact = models.CharField(max_length=100, help_text="e.g., '+15% conversion'")
+    
+    # What to change
+    target_field_id = models.CharField(max_length=255, blank=True)
+    current_value = models.JSONField(default=dict)
+    suggested_value = models.JSONField(default=dict)
+    
+    # If applied
+    applied_at = models.DateTimeField(null=True, blank=True)
+    applied_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # A/B Test reference
+    ab_test = models.ForeignKey(FormABTest, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'optimization_suggestions'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Suggestion: {self.title}"
+
+
+class DailyFormStats(models.Model):
+    """Daily aggregated statistics for forms (for predictive analytics)"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='daily_stats')
+    date = models.DateField()
+    
+    # Core metrics
+    views = models.IntegerField(default=0)
+    starts = models.IntegerField(default=0)
+    submissions = models.IntegerField(default=0)
+    abandons = models.IntegerField(default=0)
+    
+    # Calculated rates
+    conversion_rate = models.FloatField(default=0)
+    abandonment_rate = models.FloatField(default=0)
+    completion_rate = models.FloatField(default=0)
+    
+    # Time metrics
+    avg_completion_time = models.FloatField(default=0, help_text="Average time in seconds")
+    
+    # Lead scoring
+    avg_lead_score = models.FloatField(default=0)
+    hot_leads = models.IntegerField(default=0)
+    
+    # Device breakdown
+    mobile_submissions = models.IntegerField(default=0)
+    desktop_submissions = models.IntegerField(default=0)
+    tablet_submissions = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'daily_form_stats'
+        unique_together = ['form', 'date']
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['form', '-date']),
+        ]
+        
+    def __str__(self):
+        return f"Stats for {self.form.title} on {self.date}"
+
+
+class GeneratedContent(models.Model):
+    """Store AI-generated content for forms"""
+    
+    CONTENT_TYPE_CHOICES = [
+        ('description', 'Form Description'),
+        ('thank_you', 'Thank You Message'),
+        ('email_template', 'Email Template'),
+        ('sms_template', 'SMS Template'),
+        ('help_text', 'Field Help Text'),
+        ('placeholder', 'Field Placeholder'),
+        ('validation_message', 'Validation Message'),
+        ('consent_text', 'Consent Text'),
+        ('translation', 'Translation'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='generated_content')
+    content_type = models.CharField(max_length=30, choices=CONTENT_TYPE_CHOICES)
+    field_id = models.CharField(max_length=255, blank=True, help_text="If content is for specific field")
+    
+    content = models.JSONField(help_text="Generated content")
+    language = models.CharField(max_length=10, default='en')
+    
+    # Generation context
+    prompt_used = models.TextField(blank=True)
+    model_used = models.CharField(max_length=50, default='gpt-4')
+    
+    # Usage
+    is_applied = models.BooleanField(default=False)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'generated_content'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.content_type} for {self.form.title}"
+
+
+class PersonalizationRule(models.Model):
+    """Rules for form personalization"""
+    
+    TRIGGER_CHOICES = [
+        ('url_param', 'URL Parameter'),
+        ('cookie', 'Cookie Value'),
+        ('user_attribute', 'User Attribute'),
+        ('crm_data', 'CRM Data'),
+        ('time', 'Time-based'),
+        ('location', 'Geolocation'),
+        ('device', 'Device Type'),
+        ('referrer', 'Referrer'),
+    ]
+    
+    ACTION_CHOICES = [
+        ('prefill', 'Prefill Field'),
+        ('show', 'Show Field'),
+        ('hide', 'Hide Field'),
+        ('modify_options', 'Modify Options'),
+        ('change_text', 'Change Text'),
+        ('redirect', 'Redirect'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='personalization_rules')
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    priority = models.IntegerField(default=0, help_text="Higher priority rules run first")
+    
+    # Trigger configuration
+    trigger_type = models.CharField(max_length=20, choices=TRIGGER_CHOICES)
+    trigger_config = models.JSONField(default=dict, help_text="Trigger-specific configuration")
+    
+    # Action configuration
+    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    action_config = models.JSONField(default=dict, help_text="Action-specific configuration")
+    
+    # Statistics
+    times_triggered = models.IntegerField(default=0)
+    last_triggered_at = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'personalization_rules'
+        ordering = ['-priority', '-created_at']
+        
+    def __str__(self):
+        return f"Rule: {self.name}"

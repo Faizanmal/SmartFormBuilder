@@ -1,11 +1,9 @@
 """
 Notification Service for sending emails/SMS on form submissions
 """
-import re
-from typing import Dict, Any, List
+from typing import Dict, Any
 from django.core.mail import send_mail
 from django.conf import settings
-from django.template import Template, Context
 import logging
 
 logger = logging.getLogger(__name__)

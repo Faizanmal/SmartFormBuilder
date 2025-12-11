@@ -22,6 +22,17 @@ user-agents==2.2.0
 scipy==1.14.1
 django-storages==1.14.4
 boto3==1.35.76
-twilio==9.3.9
+twilio==9.8.8
 pyjwt==2.10.1
 django-redis==5.4.0
+
+# New dependencies for advanced features
+pytz==2024.2
+pyotp==2.9.0
+qrcode==8.0
+Jinja2==3.1.4
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+pywebpush==1.14.1
+ipaddress==1.0.23

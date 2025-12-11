@@ -1,7 +1,7 @@
 """
 Conditional Logic Engine for Form Field Visibility
 """
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 
 class ConditionalLogicEngine:

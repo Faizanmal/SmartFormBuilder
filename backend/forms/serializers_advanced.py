@@ -4,10 +4,11 @@ Serializers for advanced form features
 from rest_framework import serializers
 from forms.models_advanced import (
     FormStep, PartialSubmission, FormABTest, TeamMember,
-    FormComment, FormShare, FormAnalytics, LeadScore,
+    FormShare, FormAnalytics, LeadScore,
     AutomatedFollowUp, WhiteLabelConfig, AuditLog, ConsentRecord,
     ConversationalSession, ScheduledReport
 )
+from forms.models_collaboration import FormComment
 
 
 class FormStepSerializer(serializers.ModelSerializer):

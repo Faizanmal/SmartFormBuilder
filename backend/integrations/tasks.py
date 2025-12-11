@@ -15,7 +15,7 @@ def deliver_webhook(self, webhook_log_id):
     Deliver webhook with retry logic
     Uses exponential backoff: 60s, 300s, 900s, 3600s, 7200s
     """
-    from integrations.models import WebhookLog, Integration
+    from integrations.models import WebhookLog
     from integrations.services.webhook_service import sign_payload
     
     try:

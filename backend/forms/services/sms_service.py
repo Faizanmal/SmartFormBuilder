@@ -168,7 +168,6 @@ class SMSNotificationPreferences:
     @staticmethod
     def get_preferences(user):
         """Get user's SMS notification preferences"""
-        from forms.models import User
         
         # This would typically be stored in a UserProfile model
         return {

@@ -484,13 +484,16 @@ export default function FormAnalyticsPage() {
                       <TableCell className="text-sm text-muted-foreground">
                         {submission.ip_address || 'N/A'}
                       </TableCell>
-                      {form?.schema_json.fields.slice(0, 3).map(field => (
-                        <TableCell key={field.id} className="max-w-xs truncate">
-                          {Array.isArray(submission.payload_json[field.id])
-                            ? submission.payload_json[field.id].join(', ')
-                            : submission.payload_json[field.id] || '-'}
-                        </TableCell>
-                      ))}
+                      {form?.schema_json.fields.slice(0, 3).map(field => {
+                        const fieldValue = (submission.payload_json as Record<string, any>)[field.id];
+                        return (
+                          <TableCell key={field.id} className="max-w-xs truncate">
+                            {Array.isArray(fieldValue)
+                              ? fieldValue.join(', ')
+                              : fieldValue || '-'}
+                          </TableCell>
+                        );
+                      })}
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"

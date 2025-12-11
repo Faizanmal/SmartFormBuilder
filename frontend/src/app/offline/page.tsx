@@ -36,16 +36,16 @@ export default function OfflinePage() {
               <WifiOff className="h-12 w-12 text-muted-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl">You're Offline</CardTitle>
+          <CardTitle className="text-2xl">You&apos;re Offline</CardTitle>
           <CardDescription>
-            It looks like you've lost your internet connection. Don't worry, your work is saved locally.
+            It looks like you&apos;ve lost your internet connection. Don&apos;t worry, your work is saved locally.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-muted rounded-lg p-4 text-sm space-y-2">
             <p className="font-semibold">What you can do:</p>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li>Fill out forms (they'll sync when you're online)</li>
+              <li>Fill out forms (they&apos;ll sync when you&apos;re online)</li>
               <li>View cached forms and data</li>
               <li>Access recently viewed pages</li>
             </ul>

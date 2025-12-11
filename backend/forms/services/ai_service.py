@@ -142,7 +142,7 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
             
             return json.loads(response.choices[0].message.content)
             
-        except Exception as e:
+        except Exception:
             return {}
     
     def generate_privacy_text(self, business_type: str) -> Dict[str, str]:
@@ -165,7 +165,7 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
             
             return json.loads(response.choices[0].message.content)
             
-        except Exception as e:
+        except Exception:
             return {
                 "consent_text": "By submitting, you agree to our privacy policy and terms of service.",
                 "privacy_summary": "We collect and process your information to provide our services. Your data is stored securely and never shared without your consent."
@@ -190,5 +190,5 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
             
             return response.choices[0].message.content.strip()
             
-        except Exception as e:
+        except Exception:
             return f"New form submission received with {len(payload_json)} fields completed."

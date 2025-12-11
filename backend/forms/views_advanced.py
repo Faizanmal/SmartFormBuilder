@@ -12,9 +12,10 @@ from datetime import timedelta
 from forms.models import Form
 from forms.models_advanced import (
     FormStep, PartialSubmission, FormABTest, TeamMember,
-    FormComment, FormShare, FormAnalytics, LeadScore,
+    FormShare, FormAnalytics, LeadScore,
     AutomatedFollowUp, WhiteLabelConfig, AuditLog
 )
+from forms.models_collaboration import FormComment
 from forms.serializers_advanced import (
     FormStepSerializer, PartialSubmissionSerializer, FormABTestSerializer,
     TeamMemberSerializer, FormCommentSerializer, FormShareSerializer,
@@ -26,7 +27,6 @@ from forms.services.ab_testing_service import ABTestingService
 from forms.services.analytics_service import FormAnalyticsService
 from forms.services.lead_scoring_service import LeadScoringService
 from forms.services.follow_up_service import FollowUpService
-from forms.services.abandonment_service import AbandonmentRecoveryService
 
 
 class FormStepViewSet(viewsets.ModelViewSet):
@@ -36,11 +36,11 @@ class FormStepViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        form_id = self.kwargs.get('form_pk')
+        form_id = self.request.query_params.get('form_id')
         if form_id:
             form = get_object_or_404(Form, id=form_id, user=self.request.user)
             return FormStep.objects.filter(form=form)
-        return FormStep.objects.none()
+        return FormStep.objects.filter(form__user=self.request.user)
 
 
 class PartialSubmissionViewSet(viewsets.ModelViewSet):

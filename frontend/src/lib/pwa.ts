@@ -153,11 +153,16 @@ export async function unsubscribeFromPushNotifications(): Promise<boolean> {
   }
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt?: () => void | Promise<void>;
+  userChoice?: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+};
+
 export function checkInstallability(): Promise<boolean> {
   return new Promise((resolve) => {
-    let deferredPrompt: any;
+    let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       deferredPrompt = e;
       resolve(true);
@@ -170,15 +175,15 @@ export function checkInstallability(): Promise<boolean> {
 
 export function showInstallPrompt(): Promise<boolean> {
   return new Promise((resolve) => {
-    let deferredPrompt: any;
+    let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
-    const handler = (e: any) => {
+    const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       deferredPrompt = e;
-      
-      deferredPrompt.prompt();
-      
-      deferredPrompt.userChoice.then((choiceResult: any) => {
+
+      deferredPrompt.prompt?.();
+
+      deferredPrompt.userChoice?.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
         if (choiceResult.outcome === 'accepted') {
           console.log('User accepted install prompt');
           resolve(true);
@@ -196,7 +201,7 @@ export function showInstallPrompt(): Promise<boolean> {
 
 export function isStandalone(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+         ((window.navigator as Navigator & { standalone?: boolean }).standalone === true);
 }
 
 // IndexedDB for offline data
@@ -215,8 +220,8 @@ export class OfflineStorage {
         resolve();
       };
 
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
+          request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result;
         
         if (!db.objectStoreNames.contains('pendingSubmissions')) {
           db.createObjectStore('pendingSubmissions', { keyPath: 'id', autoIncrement: true });
@@ -229,7 +234,7 @@ export class OfflineStorage {
     });
   }
 
-  async saveSubmission(formId: string, data: any): Promise<number> {
+  async saveSubmission(formId: string, data: Record<string, unknown>): Promise<number> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
@@ -247,7 +252,7 @@ export class OfflineStorage {
     });
   }
 
-  async getPendingSubmissions(): Promise<any[]> {
+  async getPendingSubmissions(): Promise<Array<{ id: number; data: Record<string, unknown>; timestamp: string }>> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
@@ -255,7 +260,7 @@ export class OfflineStorage {
       const store = transaction.objectStore('pendingSubmissions');
       const request = store.getAll();
 
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => resolve(request.result as Array<{ id: number; data: Record<string, unknown>; timestamp: string }>);
       request.onerror = () => reject(request.error);
     });
   }
@@ -273,7 +278,7 @@ export class OfflineStorage {
     });
   }
 
-  async saveForm(form: any): Promise<void> {
+  async saveForm(form: Record<string, unknown>): Promise<void> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
@@ -286,7 +291,7 @@ export class OfflineStorage {
     });
   }
 
-  async getForm(id: string): Promise<any> {
+  async getForm(id: string): Promise<Record<string, unknown> | undefined> {
     if (!this.db) await this.init();
 
     return new Promise((resolve, reject) => {
@@ -294,7 +299,7 @@ export class OfflineStorage {
       const store = transaction.objectStore('forms');
       const request = store.get(id);
 
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => resolve(request.result as Record<string, unknown> | undefined);
       request.onerror = () => reject(request.error);
     });
   }

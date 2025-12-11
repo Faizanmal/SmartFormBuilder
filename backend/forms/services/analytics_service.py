@@ -1,9 +1,7 @@
 """
 Form analytics and tracking service
 """
-from django.utils import timezone
-from django.db.models import Count, Q, Avg, F
-from datetime import timedelta
+from django.db.models import Count
 import user_agents
 
 

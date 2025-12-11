@@ -22,16 +22,10 @@ export function OfflineSettings() {
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isOnline, setIsOnline] = useState(true);
-  const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState<Array<{ id: number; data: Record<string, unknown>; timestamp: string }>>([]);
   const [cacheSize, setCacheSize] = useState(0);
 
-  useEffect(() => {
-    checkInitialState();
-    checkPendingSubmissions();
-    checkCacheSize();
-  }, []);
-
-  const checkInitialState = async () => {
+  async function checkInitialState() {
     // Check notification permission
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted');
@@ -45,7 +39,7 @@ export function OfflineSettings() {
     loadSMSSettings();
   };
 
-  const loadSMSSettings = async () => {
+  async function loadSMSSettings() {
     try {
       const response = await fetch('/api/users/sms-settings');
       if (response.ok) {
@@ -56,22 +50,28 @@ export function OfflineSettings() {
     } catch (error) {
       console.error('Failed to load SMS settings:', error);
     }
-  };
+  }
 
-  const checkPendingSubmissions = async () => {
+  async function checkPendingSubmissions() {
     const storage = new OfflineStorage();
     await storage.init();
     const submissions = await storage.getPendingSubmissions();
     setPendingSubmissions(submissions);
-  };
+  }
 
-  const checkCacheSize = async () => {
+  async function checkCacheSize() {
     if ('storage' in navigator && 'estimate' in navigator.storage) {
       const estimate = await navigator.storage.estimate();
       const usage = estimate.usage || 0;
       setCacheSize(Math.round(usage / 1024 / 1024 * 10) / 10); // MB
     }
-  };
+  }
+
+  useEffect(() => {
+    checkInitialState();
+    checkPendingSubmissions();
+    checkCacheSize();
+  }, []);
 
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {

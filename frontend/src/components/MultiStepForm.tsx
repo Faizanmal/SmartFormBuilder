@@ -34,7 +34,7 @@ interface MultiStepFormProps {
 
 export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeData }: MultiStepFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<Record<string, any>>(resumeData?.payload_json || {});
+  const [formData, setFormData] = useState<Record<string, unknown>>(resumeData?.payload_json || {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,14 +154,14 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
         {field.type === 'text' || field.type === 'email' ? (
           <input
             type={field.type}
-            value={formData[fieldId] || ''}
+            value={(formData[fieldId] as string) || ''}
             onChange={(e) => handleFieldChange(fieldId, e.target.value)}
             placeholder={field.placeholder}
             className="w-full p-2 border rounded-md"
           />
         ) : field.type === 'textarea' ? (
           <textarea
-            value={formData[fieldId] || ''}
+            value={(formData[fieldId] as string) || ''}
             onChange={(e) => handleFieldChange(fieldId, e.target.value)}
             placeholder={field.placeholder}
             rows={4}
@@ -169,7 +169,7 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
           />
         ) : field.type === 'select' ? (
           <select
-            value={formData[fieldId] || ''}
+            value={(formData[fieldId] as string) || ''}
             onChange={(e) => handleFieldChange(fieldId, e.target.value)}
             className="w-full p-2 border rounded-md"
           >

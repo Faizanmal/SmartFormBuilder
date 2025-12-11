@@ -1,7 +1,6 @@
 """
 Lead scoring and management service
 """
-from django.utils import timezone
 
 
 class LeadScoringService:
@@ -131,7 +130,6 @@ class LeadScoringService:
         # - Assign based on current workload
         
         from forms.models_advanced import LeadScore
-        from django.db.models import Count
         
         # Get team member with fewest assigned leads
         team_member_loads = []
@@ -155,7 +153,7 @@ class LeadScoringService:
     def get_lead_analytics(user, date_from=None, date_to=None):
         """Get lead analytics for a user"""
         from forms.models_advanced import LeadScore
-        from django.db.models import Count, Q
+        from django.db.models import Count
         from forms.models import Form
         
         # Get all forms for user

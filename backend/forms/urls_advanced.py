@@ -5,7 +5,7 @@ from django.urls import path, include
 from rest_framework_nested import routers
 from .views_advanced import (
     FormStepViewSet, PartialSubmissionViewSet, FormABTestViewSet,
-    TeamMemberViewSet, FormCommentViewSet, FormShareViewSet,
+    FormCommentViewSet, FormShareViewSet,
     FormAnalyticsViewSet, LeadScoreViewSet, AutomatedFollowUpViewSet,
     WhiteLabelConfigViewSet, AuditLogViewSet
 )
@@ -24,13 +24,11 @@ router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 router.register(r'conversational', ConversationalFormViewSet, basename='conversational')
 router.register(r'reports', ReportingViewSet, basename='report')
 
-# Nested routes for form-specific resources
-forms_router = routers.NestedDefaultRouter(router, r'forms', lookup='form')
-forms_router.register(r'steps', FormStepViewSet, basename='form-step')
-forms_router.register(r'comments', FormCommentViewSet, basename='form-comment')
-forms_router.register(r'analytics', FormAnalyticsViewSet, basename='form-analytics')
+# Form-specific resources (using query parameters instead of nested routing)
+router.register(r'form-steps', FormStepViewSet, basename='form-step')
+router.register(r'form-comments', FormCommentViewSet, basename='form-comment')
+router.register(r'form-analytics', FormAnalyticsViewSet, basename='form-analytics')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(forms_router.urls)),
 ]

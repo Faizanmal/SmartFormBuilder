@@ -3,7 +3,7 @@
  */
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +53,7 @@ interface Field {
   placeholder?: string;
   required: boolean;
   options?: string[];
-  validation?: Record<string, any>;
+  validation?: Record<string, unknown>;
   help?: string;
 }
 
@@ -62,7 +62,7 @@ interface FormBuilderProps {
     title: string;
     description: string;
     fields: Field[];
-    logic?: any[];
+    logic?: unknown[];
   };
   onSave?: (schema: any) => void;
 }
@@ -74,8 +74,12 @@ export function FormBuilder({ initialSchema, onSave }: FormBuilderProps) {
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'builder' | 'preview' | 'json'>('builder');
 
-  // Generate unique field ID
-  const generateFieldId = () => `f_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Generate unique field ID using a stable counter (avoids impure calls during render)
+  const idCounter = useRef(0);
+  const generateFieldId = useCallback(() => {
+    idCounter.current += 1;
+    return `f_${idCounter.current}`;
+  }, []);
 
   // Add new field
   const addField = (type: string) => {

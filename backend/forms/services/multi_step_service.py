@@ -4,7 +4,6 @@ Multi-step form service with save & resume functionality
 from django.utils import timezone
 from datetime import timedelta
 import secrets
-import hashlib
 
 
 class MultiStepFormService:

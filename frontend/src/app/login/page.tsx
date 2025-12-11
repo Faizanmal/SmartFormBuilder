@@ -32,8 +32,9 @@ export default function LoginPage() {
       
       toast.success("Welcome back!");
       router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Login failed. Please check your credentials.");
+    } catch (error: unknown) {
+      const err = error as any;
+      toast.error(err?.response?.data?.detail || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center text-muted-foreground">
-            Don&apsos;t have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary hover:underline">
               Sign up
             </Link>

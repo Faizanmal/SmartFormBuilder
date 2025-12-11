@@ -6,8 +6,6 @@ import hashlib
 import json
 import requests
 from typing import Dict, Any
-from datetime import datetime
-from django.conf import settings
 
 
 class WebhookService:

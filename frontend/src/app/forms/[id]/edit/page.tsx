@@ -284,7 +284,7 @@ export default function FormEditorPage() {
 
               {schema.fields.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No fields yet. Click "Add Field" to get started.</p>
+                  <p>No fields yet. Click &quot;Add Field&quot; to get started.</p>
                 </div>
               )}
             </CardContent>

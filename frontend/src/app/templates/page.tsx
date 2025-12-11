@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { templatesApi } from "@/lib/api-client";
 import type { FormTemplate, FormSchema } from "@/types";
@@ -477,7 +477,7 @@ function TemplateCard({
   template: FormTemplate;
   onPreview: () => void;
   onUse: () => void;
-  getCategoryIcon: (category: string) => JSX.Element;
+  getCategoryIcon: (category: string) => React.JSX.Element;
   getCategoryLabel: (category: string) => string;
   featured?: boolean;
 }) {

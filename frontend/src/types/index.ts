@@ -73,7 +73,7 @@ export interface ConditionalLogic {
   if: {
     field: string;
     operator: 'equals' | 'in' | 'contains' | 'gte' | 'lte';
-    value: any;
+    value: unknown;
   };
   show?: string[];
   hide?: string[];
@@ -147,7 +147,7 @@ export interface FormDraft {
 export interface Submission {
   id: string;
   form: string;
-  payload_json: Record<string, any>;
+  payload_json: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   processed_at: string | null;
@@ -174,7 +174,7 @@ export interface Integration {
   id: string;
   integration_type: 'google_sheets' | 'notion' | 'webhook' | 'stripe' | 'email' | 'zapier' | 'slack';
   name: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   is_active: boolean;
   last_triggered_at: string | null;
   error_message?: string;

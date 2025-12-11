@@ -161,7 +161,7 @@ DEVICES
         for device in report['devices']:
             text += f"- {device['device_type'].title()}: {device['count']} ({device['percentage']}%)\n"
         
-        text += f"\n\nFull report attached as JSON.\n"
+        text += "\n\nFull report attached as JSON.\n"
         
         return text
     

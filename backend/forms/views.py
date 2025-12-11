@@ -131,8 +131,6 @@ class FormViewSet(viewsets.ModelViewSet):
         form = self.get_object()
         
         # Get submission stats by day (last 30 days)
-        from django.db.models import Count
-        from django.utils import timezone
 class SubmissionViewSet(viewsets.ModelViewSet):
     """ViewSet for Submission operations"""
     

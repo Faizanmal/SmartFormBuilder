@@ -10,7 +10,7 @@ declare global {
         theme?: string;
         width?: string | number;
         height?: string | number;
-        onSubmit?: (payload: any) => void;
+        onSubmit?: (payload: unknown) => void;
       }) => { iframe: HTMLIFrameElement; destroy: () => void };
       popup: (opts: {
         formId?: string;
