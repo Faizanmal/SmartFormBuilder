@@ -1,7 +1,6 @@
 # Generated migration for automation features
 
 from django.conf import settings
-import django.contrib.postgres.fields
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
@@ -127,8 +126,8 @@ class Migration(migrations.Migration):
                 ('threshold_value', models.FloatField(default=0, help_text='Threshold to trigger alert')),
                 ('threshold_direction', models.CharField(choices=[('above', 'Above'), ('below', 'Below'), ('change', 'Change')], default='above', max_length=10)),
                 ('comparison_period', models.CharField(default='day', help_text='hour, day, week, month', max_length=20)),
-                ('notification_channels', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('email', 'Email'), ('slack', 'Slack'), ('sms', 'SMS'), ('webhook', 'Webhook')], max_length=20), default=list, size=None)),
-                ('notification_emails', django.contrib.postgres.fields.ArrayField(base_field=models.EmailField(max_length=254), default=list, size=None)),
+                ('notification_channels', models.JSONField(default=list, help_text='List of channels: email, slack, sms, webhook')),
+                ('notification_emails', models.JSONField(default=list, help_text='List of email addresses')),
                 ('slack_webhook', models.URLField(blank=True)),
                 ('custom_webhook', models.URLField(blank=True)),
                 ('last_triggered_at', models.DateTimeField(blank=True, null=True)),

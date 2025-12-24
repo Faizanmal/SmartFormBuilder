@@ -2,7 +2,7 @@
 Advanced models for enhanced form features
 """
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
+
 import uuid
 
 
@@ -69,7 +69,7 @@ class FormABTest(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='ab_tests')
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='ab_tests_advanced')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     variant_a_schema = models.JSONField(help_text="Control variant")
@@ -364,7 +364,7 @@ class ConsentRecord(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='consents')
+    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='consent_records')
     consent_type = models.CharField(max_length=50, choices=CONSENT_TYPE_CHOICES)
     granted = models.BooleanField(default=False)
     consent_text = models.TextField(help_text="Text of the consent agreement")
@@ -417,7 +417,7 @@ class ScheduledReport(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='scheduled_reports')
     schedule_type = models.CharField(max_length=20, choices=SCHEDULE_CHOICES)
-    recipients = ArrayField(models.EmailField(), help_text="Email addresses to send reports to")
+    recipients = models.JSONField(default=list, help_text="Email addresses to send reports to")
     report_options = models.JSONField(default=dict, help_text="Chart types, metrics to include, etc.")
     is_active = models.BooleanField(default=True)
     next_run = models.DateTimeField(help_text="When to send next report")
@@ -565,7 +565,7 @@ class FormIntegration(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='integrations')
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='form_integrations')
     integration_id = models.CharField(max_length=100, help_text="ID from marketplace catalog")
     name = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -638,11 +638,8 @@ class AlertConfig(models.Model):
     comparison_period = models.CharField(max_length=20, default='day', help_text="hour, day, week, month")
     
     # Notification settings
-    notification_channels = ArrayField(
-        models.CharField(max_length=20, choices=CHANNEL_CHOICES),
-        default=list
-    )
-    notification_emails = ArrayField(models.EmailField(), default=list)
+    notification_channels = models.JSONField(default=list, help_text="List of channels: email, slack, sms, webhook")
+    notification_emails = models.JSONField(default=list, help_text="List of email addresses")
     slack_webhook = models.URLField(blank=True)
     custom_webhook = models.URLField(blank=True)
     

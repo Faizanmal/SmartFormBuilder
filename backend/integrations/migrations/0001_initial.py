@@ -123,7 +123,7 @@ class Migration(migrations.Migration):
                     "integration",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="webhook_logs",
+                        related_name="integration_webhook_logs",
                         to="integrations.integration",
                     ),
                 ),
@@ -131,13 +131,13 @@ class Migration(migrations.Migration):
                     "submission",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="webhook_logs",
+                        related_name="integration_webhook_logs",
                         to="forms.submission",
                     ),
                 ),
             ],
             options={
-                "db_table": "webhook_logs",
+                "db_table": "integration_webhook_logs",
                 "ordering": ["-created_at"],
             },
         ),

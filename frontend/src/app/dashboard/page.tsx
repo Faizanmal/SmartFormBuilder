@@ -1,25 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { formsApi } from "@/lib/api-client";
+import useAuth from "@/hooks/useAuth";
 import type { Form } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, FileText, BarChart3, Settings, ExternalLink } from "lucide-react";
+import { PlusCircle, FileText, BarChart3, Settings, ExternalLink, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth(true);
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadForms();
-  }, []);
-
-  const loadForms = async () => {
+  const loadForms = useCallback(async () => {
     try {
       const data = await formsApi.list();
       setForms(data);
@@ -29,7 +27,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadForms();
+    }
+  }, [isAuthenticated, loadForms]);
 
   const handleCreateForm = () => {
     router.push("/forms/new");
@@ -55,6 +59,18 @@ export default function DashboardPage() {
     router.push(`/forms/${id}/embed`);
   };
 
+  // Show loading while checking auth
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -68,6 +84,23 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Header with user info */}
+      <div className="flex justify-between items-center mb-6 pb-4 border-b">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg font-semibold">
+            {user?.first_name?.[0] || user?.username?.[0] || 'U'}
+          </div>
+          <div>
+            <p className="font-medium">{user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username}</p>
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+          </div>
+        </div>
+        <Button variant="outline" onClick={logout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold">My Forms</h1>

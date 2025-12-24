@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formsApi, templatesApi } from "@/lib/api-client";
+import useAuth from "@/hooks/useAuth";
 import type { FormTemplate } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +16,22 @@ import { toast } from "sonner";
 
 export default function NewFormPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth(true);
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [context, setContext] = useState("");
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleGenerateForm = async () => {
     if (!prompt.trim()) {

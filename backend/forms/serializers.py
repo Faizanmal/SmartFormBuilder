@@ -28,11 +28,30 @@ class FormCreateSerializer(serializers.ModelSerializer):
     
     prompt = serializers.CharField(write_only=True, required=False, help_text="Natural language description for AI generation")
     context = serializers.CharField(write_only=True, required=False, help_text="Additional context for AI generation")
+    title = serializers.CharField(required=False, allow_blank=True, help_text="Form title (auto-generated if using prompt)")
+    slug = serializers.SlugField(read_only=True)
     
     class Meta:
         model = Form
-        fields = ['id', 'title', 'description', 'schema_json', 'settings_json', 'prompt', 'context']
-        read_only_fields = ['id']
+        fields = ['id', 'title', 'slug', 'description', 'schema_json', 'settings_json', 'prompt', 'context']
+        read_only_fields = ['id', 'slug']
+    
+    def validate(self, attrs):
+        """Ensure either title or prompt is provided"""
+        prompt = attrs.get('prompt')
+        title = attrs.get('title')
+        schema_json = attrs.get('schema_json')
+        
+        if not prompt and not title and not schema_json:
+            raise serializers.ValidationError({
+                'title': 'Either title/schema_json or prompt must be provided'
+            })
+        
+        # Set default title if using prompt
+        if prompt and not title:
+            attrs['title'] = 'Untitled Form'  # Will be replaced by AI-generated title
+        
+        return attrs
 
 
 class SubmissionSerializer(serializers.ModelSerializer):

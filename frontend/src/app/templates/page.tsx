@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { templatesApi } from "@/lib/api-client";
+import useAuth from "@/hooks/useAuth";
 import type { FormTemplate, FormSchema } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,9 +49,21 @@ const CATEGORIES = [
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth(true);
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<FormTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState<FormTemplate | null>(null);
@@ -138,7 +151,7 @@ export default function TemplatesPage() {
           { id: 'f3', type: 'date', label: 'Wedding Date', required: true },
           { id: 'f4', type: 'text', label: 'Venue Location', required: true },
           { id: 'f5', type: 'number', label: 'Expected Guest Count' },
-          { id: 'f6', type: 'select', label: 'Package Interest', options: ['Basic', 'Standard', 'Premium', 'Custom'] },
+          { id: 'f6', type: 'select', label: 'Package Interest', options: [{ label: 'Basic', value: 'Basic' }, { label: 'Standard', value: 'Standard' }, { label: 'Premium', value: 'Premium' }, { label: 'Custom', value: 'Custom' }] },
           { id: 'f7', type: 'textarea', label: 'Tell us about your vision' },
         ],
         settings: { consent_text: 'By submitting, you agree to be contacted about our services.' }
@@ -162,8 +175,8 @@ export default function TemplatesPage() {
           { id: 'f2', type: 'email', label: 'Email', required: true },
           { id: 'f3', type: 'phone', label: 'Phone Number', required: true },
           { id: 'f4', type: 'date', label: 'Date of Birth' },
-          { id: 'f5', type: 'select', label: 'Membership Type', options: ['Monthly', 'Quarterly', 'Annual'], required: true },
-          { id: 'f6', type: 'multiselect', label: 'Fitness Goals', options: ['Weight Loss', 'Muscle Building', 'General Fitness', 'Sports Training'] },
+          { id: 'f5', type: 'select', label: 'Membership Type', options: [{ label: 'Monthly', value: 'Monthly' }, { label: 'Quarterly', value: 'Quarterly' }, { label: 'Annual', value: 'Annual' }], required: true },
+          { id: 'f6', type: 'multiselect', label: 'Fitness Goals', options: [{ label: 'Weight Loss', value: 'Weight Loss' }, { label: 'Muscle Building', value: 'Muscle Building' }, { label: 'General Fitness', value: 'General Fitness' }, { label: 'Sports Training', value: 'Sports Training' }] },
           { id: 'f7', type: 'checkbox', label: 'I confirm I have no medical conditions that prevent me from exercising', required: true },
         ],
         settings: {}
@@ -186,8 +199,8 @@ export default function TemplatesPage() {
           { id: 'f1', type: 'text', label: 'Your Name', required: true },
           { id: 'f2', type: 'email', label: 'Email', required: true },
           { id: 'f3', type: 'phone', label: 'Phone', required: true },
-          { id: 'f4', type: 'select', label: 'Budget Range', options: ['Under $200K', '$200K-$400K', '$400K-$600K', '$600K-$1M', 'Over $1M'] },
-          { id: 'f5', type: 'multiselect', label: 'Property Type', options: ['House', 'Apartment', 'Condo', 'Townhouse'] },
+          { id: 'f4', type: 'select', label: 'Budget Range', options: [{ label: 'Under $200K', value: 'Under $200K' }, { label: '$200K-$400K', value: '$200K-$400K' }, { label: '$400K-$600K', value: '$400K-$600K' }, { label: '$600K-$1M', value: '$600K-$1M' }, { label: 'Over $1M', value: 'Over $1M' }] },
+          { id: 'f5', type: 'multiselect', label: 'Property Type', options: [{ label: 'House', value: 'House' }, { label: 'Apartment', value: 'Apartment' }, { label: 'Condo', value: 'Condo' }, { label: 'Townhouse', value: 'Townhouse' }] },
           { id: 'f6', type: 'number', label: 'Minimum Bedrooms' },
           { id: 'f7', type: 'textarea', label: 'Additional Requirements' },
         ],
@@ -237,8 +250,8 @@ export default function TemplatesPage() {
           { id: 'f1', type: 'text', label: 'Name', required: true },
           { id: 'f2', type: 'email', label: 'Email', required: true },
           { id: 'f3', type: 'text', label: 'Company Name' },
-          { id: 'f4', type: 'select', label: 'Service Interest', options: ['Strategy', 'Marketing', 'Technology', 'Operations', 'Other'] },
-          { id: 'f5', type: 'select', label: 'Project Timeline', options: ['ASAP', '1-3 months', '3-6 months', '6+ months'] },
+          { id: 'f4', type: 'select', label: 'Service Interest', options: [{ label: 'Strategy', value: 'Strategy' }, { label: 'Marketing', value: 'Marketing' }, { label: 'Technology', value: 'Technology' }, { label: 'Operations', value: 'Operations' }, { label: 'Other', value: 'Other' }] },
+          { id: 'f5', type: 'select', label: 'Project Timeline', options: [{ label: 'ASAP', value: 'ASAP' }, { label: '1-3 months', value: '1-3 months' }, { label: '3-6 months', value: '3-6 months' }, { label: '6+ months', value: '6+ months' }] },
           { id: 'f6', type: 'textarea', label: 'Describe your project or challenge', required: true },
         ],
         settings: {}
@@ -261,7 +274,7 @@ export default function TemplatesPage() {
           { id: 'f1', type: 'text', label: 'Your Name', required: true },
           { id: 'f2', type: 'email', label: 'Email', required: true },
           { id: 'f3', type: 'number', label: 'Number of Guests', required: true },
-          { id: 'f4', type: 'select', label: 'Dietary Preferences', options: ['None', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Kosher', 'Halal'] },
+          { id: 'f4', type: 'select', label: 'Dietary Preferences', options: [{ label: 'None', value: 'None' }, { label: 'Vegetarian', value: 'Vegetarian' }, { label: 'Vegan', value: 'Vegan' }, { label: 'Gluten-Free', value: 'Gluten-Free' }, { label: 'Kosher', value: 'Kosher' }, { label: 'Halal', value: 'Halal' }] },
           { id: 'f5', type: 'textarea', label: 'Allergies or Special Requirements' },
           { id: 'f6', type: 'checkbox', label: 'I require wheelchair accessibility' },
         ],

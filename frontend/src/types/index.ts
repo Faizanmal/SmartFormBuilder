@@ -24,6 +24,19 @@ export interface FieldValidation {
   maxSize?: number; // Max file size in bytes
 }
 
+export interface ConditionalRule {
+  id: string;
+  fieldId: string; // The field to watch
+  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'is_empty' | 'is_not_empty';
+  value: string;
+  action: 'show' | 'hide' | 'require' | 'unrequire';
+}
+
+export interface FieldOption {
+  label: string;
+  value: string;
+}
+
 export interface FormField {
   id: string;
   type: 'text' | 'email' | 'phone' | 'textarea' | 'number' | 'date' | 'time' | 
@@ -33,7 +46,7 @@ export interface FormField {
   placeholder?: string;
   required?: boolean;
   validation?: FieldValidation;
-  options?: string[];
+  options?: FieldOption[];
   help?: string;
   
   // Payment field specific
@@ -67,6 +80,9 @@ export interface FormField {
   
   // Step assignment for multi-step forms
   step?: number;
+  
+  // Conditional logic for this field
+  conditionalRules?: ConditionalRule[];
 }
 
 export interface ConditionalLogic {

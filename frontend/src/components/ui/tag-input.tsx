@@ -11,8 +11,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useTags, useCreateTag } from '@/hooks/use-api';
-import type { Tag } from '@/lib/api';
+// import type { Tag } from '@/lib/api';
 import { cn } from '@/lib/utils';
+
+interface Tag {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 interface TagInputProps {
   selectedTags: Tag[];
@@ -102,7 +108,7 @@ export function TagInput({ selectedTags, onChange, className }: TagInputProps) {
                   ) : tags.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No tags yet</p>
                   ) : (
-                    tags.map((tag) => {
+                    tags.map((tag: Tag) => {
                       const isSelected = selectedTags.some((t) => t.id === tag.id);
                       return (
                         <Badge

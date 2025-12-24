@@ -172,7 +172,7 @@ class FormNotification(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='notifications')
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='push_notifications')
     subscription = models.ForeignKey(
         PushNotificationSubscription,
         on_delete=models.CASCADE,

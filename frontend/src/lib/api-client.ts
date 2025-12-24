@@ -85,6 +85,11 @@ export const formsApi = {
     return response.data;
   },
 
+  unpublish: async (id: string): Promise<{ status: string }> => {
+    const response = await apiClient.post(`/forms/${id}/unpublish/`);
+    return response.data;
+  },
+
   getEmbedCode: async (id: string): Promise<{ embed_code: string; hosted_link: string; slug: string }> => {
     const response = await apiClient.get(`/forms/${id}/embed/`);
     return response.data;

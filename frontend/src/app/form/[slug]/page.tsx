@@ -383,11 +383,15 @@ export default function PublicFormPage() {
                 <SelectValue placeholder={field.placeholder || "Select..."} />
               </SelectTrigger>
               <SelectContent>
-                {field.options?.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
+                {field.options?.map((option) => {
+                  const label = typeof option === 'string' ? option : option.label;
+                  const value = typeof option === 'string' ? option : option.value;
+                  return (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             {field.help && <p className="text-xs text-muted-foreground">{field.help}</p>}
@@ -420,14 +424,18 @@ export default function PublicFormPage() {
               value={value as string}
               onValueChange={(val: string) => setFormData({ ...formData, [field.id]: val })}
             >
-              {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`${field.id}-${option}`} />
-                  <Label htmlFor={`${field.id}-${option}`} className="font-normal">
-                    {option}
-                  </Label>
-                </div>
-              ))}
+              {field.options?.map((option) => {
+                const label = typeof option === 'string' ? option : option.label;
+                const value = typeof option === 'string' ? option : option.value;
+                return (
+                  <div key={value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={value} id={`${field.id}-${value}`} />
+                    <Label htmlFor={`${field.id}-${value}`} className="font-normal">
+                      {label}
+                    </Label>
+                  </div>
+                );
+              })}
             </RadioGroup>
             {field.help && <p className="text-xs text-muted-foreground">{field.help}</p>}
           </div>
@@ -441,24 +449,28 @@ export default function PublicFormPage() {
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <div className="space-y-2">
-              {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${field.id}-${option}`}
-                    checked={Array.isArray(value) && value.includes(option)}
-                    onCheckedChange={(checked: boolean | "indeterminate") => {
-                      const currentValues = Array.isArray(value) ? value : [];
-                      const newValues = checked
-                        ? [...currentValues, option]
-                        : currentValues.filter((v: string) => v !== option);
-                      setFormData({ ...formData, [field.id]: newValues });
-                    }}
-                  />
-                  <Label htmlFor={`${field.id}-${option}`} className="text-sm font-normal">
-                    {option}
-                  </Label>
-                </div>
-              ))}
+              {field.options?.map((option) => {
+                const label = typeof option === 'string' ? option : option.label;
+                const val = typeof option === 'string' ? option : option.value;
+                return (
+                  <div key={val} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${field.id}-${val}`}
+                      checked={Array.isArray(value) && value.includes(val)}
+                      onCheckedChange={(checked: boolean | "indeterminate") => {
+                        const currentValues = Array.isArray(value) ? value : [];
+                        const newValues = checked
+                          ? [...currentValues, val]
+                          : currentValues.filter((v: string) => v !== val);
+                        setFormData({ ...formData, [field.id]: newValues });
+                      }}
+                    />
+                    <Label htmlFor={`${field.id}-${val}`} className="text-sm font-normal">
+                      {label}
+                    </Label>
+                  </div>
+                );
+              })}
             </div>
             {field.help && <p className="text-xs text-muted-foreground">{field.help}</p>}
           </div>

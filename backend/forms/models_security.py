@@ -154,7 +154,7 @@ class DataPrivacyRequest(models.Model):
 class ConsentTracking(models.Model):
     """Track user consent for data processing"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='consents')
+    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='consent_tracking')
     consent_type = models.CharField(
         max_length=50,
         choices=[

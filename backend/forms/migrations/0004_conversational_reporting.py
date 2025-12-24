@@ -1,7 +1,6 @@
 # Generated migration for conversational forms and reporting
 
 from django.db import migrations, models
-import django.contrib.postgres.fields
 import uuid
 
 
@@ -38,7 +37,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('schedule_type', models.CharField(choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')], max_length=20)),
-                ('recipients', django.contrib.postgres.fields.ArrayField(base_field=models.EmailField(max_length=254), help_text='Email addresses to send reports to', size=None)),
+                ('recipients', models.JSONField(default=list, help_text='Email addresses to send reports to')),
                 ('report_options', models.JSONField(default=dict, help_text='Chart types, metrics to include, etc.')),
                 ('is_active', models.BooleanField(default=True)),
                 ('next_run', models.DateTimeField(help_text='When to send next report')),

@@ -61,8 +61,8 @@ class WebhookLog(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name='webhook_logs')
-    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='webhook_logs')
+    integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name='integration_webhook_logs')
+    submission = models.ForeignKey('forms.Submission', on_delete=models.CASCADE, related_name='integration_webhook_logs')
     payload_json = models.JSONField()
     response_status_code = models.IntegerField(null=True, blank=True)
     response_body = models.TextField(blank=True)
@@ -72,7 +72,7 @@ class WebhookLog(models.Model):
     delivered_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
-        db_table = 'webhook_logs'
+        db_table = 'integration_webhook_logs'
         ordering = ['-created_at']
         
     def __str__(self):

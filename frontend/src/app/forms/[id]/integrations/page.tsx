@@ -63,7 +63,7 @@ export default function FormIntegrationsPage() {
         
         // Load webhook logs
         const logs = await integrationsApi.getWebhookLogs(webhook.id);
-        setWebhookLogs(logs.slice(0, 10));  // Get last 10
+        setWebhookLogs((logs as any[]).slice(0, 10));  // Get last 10
       }
 
       const email = integrationsData.find(i => i.integration_type === "email");
@@ -395,7 +395,7 @@ is_valid = verify_webhook(
                           )}
                         </TableCell>
                         <TableCell>
-                          {log.response_status_code || '-'}
+                          {(log as any).response_status_code || '-'}
                         </TableCell>
                         <TableCell className="text-right">
                           {log.status === 'failed' && (

@@ -128,9 +128,78 @@ class FormViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def analytics(self, request, pk=None):
         """Get analytics for form"""
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+        from datetime import timedelta
+        
         form = self.get_object()
         
-        # Get submission stats by day (last 30 days)
+        # Get date range filter
+        days = int(request.query_params.get('days', 30))
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            from datetime import datetime
+            start_date = datetime.fromisoformat(date_from)
+        else:
+            start_date = timezone.now() - timedelta(days=days)
+        
+        if date_to:
+            from datetime import datetime
+            end_date = datetime.fromisoformat(date_to)
+        else:
+            end_date = timezone.now()
+        
+        # Get submission stats by day
+        submissions_by_day = (
+            Submission.objects.filter(form=form, created_at__gte=start_date, created_at__lte=end_date)
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+        
+        # Calculate field completion rates
+        field_completion = {}
+        if form.schema_json and 'fields' in form.schema_json:
+            for field in form.schema_json['fields']:
+                field_id = field.get('id')
+                field_label = field.get('label', field_id)
+                # Count submissions with this field filled
+                filled_count = 0
+                total_count = 0
+                for submission in Submission.objects.filter(form=form, created_at__gte=start_date):
+                    total_count += 1
+                    payload = submission.payload_json or {}
+                    if field_id in payload and payload[field_id]:
+                        filled_count += 1
+                
+                if total_count > 0:
+                    field_completion[field_label] = round((filled_count / total_count) * 100, 1)
+        
+        # Calculate summary stats
+        total_submissions = Submission.objects.filter(form=form, created_at__gte=start_date, created_at__lte=end_date).count()
+        
+        return Response({
+            'form_id': str(form.id),
+            'form_title': form.title,
+            'summary': {
+                'views': form.views_count,
+                'submissions': total_submissions,
+                'conversion_rate': form.conversion_rate,
+                'completion_rate': form.completion_rate,
+            },
+            'submissions_by_day': [
+                {'date': str(item['date']), 'count': item['count']}
+                for item in submissions_by_day
+            ],
+            'field_completion': field_completion,
+            'date_range': {
+                'start': str(start_date.date()) if hasattr(start_date, 'date') else str(start_date),
+                'end': str(end_date.date()) if hasattr(end_date, 'date') else str(end_date),
+            }
+        })
 class SubmissionViewSet(viewsets.ModelViewSet):
     """ViewSet for Submission operations"""
     
