@@ -26,7 +26,14 @@ export function useAuth(requireAuth = true) {
     isLoading: true,
   });
 
-  const checkAuth = useCallback(async () => {
+  const logout = useCallback(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setState({ user: null, isAuthenticated: false, isLoading: false });
+    router.push('/login');
+  }, [router]);
+
+  const checkAuth = useCallback(async function checkAuthImpl() {
     if (typeof window === 'undefined') return;
     
     const accessToken = localStorage.getItem('access_token');
@@ -64,7 +71,7 @@ export function useAuth(requireAuth = true) {
             const { access } = await refreshResponse.json();
             localStorage.setItem('access_token', access);
             // Retry fetching user
-            checkAuth();
+            checkAuthImpl();
             return;
           }
         }
@@ -82,7 +89,7 @@ export function useAuth(requireAuth = true) {
         router.push('/login');
       }
     }
-  }, [requireAuth, router]);
+  }, [logout, requireAuth, router]);
 
   useEffect(() => {
     checkAuth();
@@ -107,13 +114,6 @@ export function useAuth(requireAuth = true) {
     await checkAuth();
     return true;
   }, [checkAuth]);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setState({ user: null, isAuthenticated: false, isLoading: false });
-    router.push('/login');
-  }, [router]);
 
   const register = useCallback(async (data: {
     email: string;

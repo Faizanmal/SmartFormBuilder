@@ -421,7 +421,7 @@ export function VoiceDesignStudio({ formId, initialSchema, onSave }: VoiceDesign
                     Your form fields will appear here as you add them.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Try saying "Add a name field"
+                    Try saying &quot;Add a name field&quot;
                   </p>
                 </div>
               )}

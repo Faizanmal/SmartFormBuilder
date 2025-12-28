@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { templatesApi } from "@/lib/api-client";
 import useAuth from "@/hooks/useAuth";
-import type { FormTemplate, FormSchema } from "@/types";
+import type { FormTemplate } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,15 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<FormTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewTemplate, setPreviewTemplate] = useState<FormTemplate | null>(null);
+  const [usingTemplate, setUsingTemplate] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    loadTemplates();
+  }, [isAuthenticated]);
 
   if (authLoading || !isAuthenticated) {
     return (
@@ -64,18 +73,6 @@ export default function TemplatesPage() {
       </div>
     );
   }
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [previewTemplate, setPreviewTemplate] = useState<FormTemplate | null>(null);
-  const [usingTemplate, setUsingTemplate] = useState(false);
-
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
-  useEffect(() => {
-    filterTemplates();
-  }, [templates, selectedCategory, searchQuery]);
 
   const loadTemplates = async () => {
     try {
@@ -88,7 +85,7 @@ export default function TemplatesPage() {
     }
   };
 
-  const filterTemplates = () => {
+  const filterTemplates = useCallback(() => {
     let filtered = templates;
 
     // Filter by category
@@ -106,7 +103,11 @@ export default function TemplatesPage() {
     }
 
     setFilteredTemplates(filtered);
-  };
+  }, [templates, selectedCategory, searchQuery]);
+
+  useEffect(() => {
+    filterTemplates();
+  }, [templates, selectedCategory, searchQuery, filterTemplates]);
 
   const handleUseTemplate = async (templateId: string) => {
     setUsingTemplate(true);

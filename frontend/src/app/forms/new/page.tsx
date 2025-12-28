@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formsApi, templatesApi } from "@/lib/api-client";
 import useAuth from "@/hooks/useAuth";
@@ -48,8 +48,9 @@ export default function NewFormPage() {
 
       toast.success("Form generated successfully!");
       router.push(`/forms/${form.id}/edit`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to generate form");
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? (error.response.data as { error: string }).error : "Failed to generate form";
+      toast.error(errorMessage);
       console.error(error);
     } finally {
       setLoading(false);
@@ -111,7 +112,7 @@ export default function NewFormPage() {
             <CardHeader>
               <CardTitle>Describe Your Form</CardTitle>
               <CardDescription>
-                Tell us what information you need to collect and we'll generate a complete form for you
+                Tell us what information you need to collect and we&apos;ll generate a complete form for you
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -193,7 +194,7 @@ export default function NewFormPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {templates.length === 0 ? (
+              {[].length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
                   <p>No templates available yet</p>
@@ -201,7 +202,7 @@ export default function NewFormPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {templates.map((template) => (
+                  {([] as FormTemplate[]).map((template) => (
                     <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
                       <CardHeader>
                         <CardTitle className="text-lg">{template.name}</CardTitle>

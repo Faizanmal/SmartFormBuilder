@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formsApi, submissionsApi } from "@/lib/api-client";
 import type { Form, FormField, Submission, Analytics, AnalyticsFilters } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { BarChart3, Download, Eye, FileText, TrendingUp, Calendar as CalendarIcon, Filter, RefreshCw, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from "@/lib/utils";
 
@@ -54,15 +53,7 @@ export default function FormAnalyticsPage() {
   // Submission detail modal
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [formId]);
-
-  useEffect(() => {
-    filterSubmissions();
-  }, [submissions, dateFrom, dateTo]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const filters: AnalyticsFilters = {};
       if (dateFrom) filters.date_from = format(dateFrom, 'yyyy-MM-dd');
@@ -76,14 +67,14 @@ export default function FormAnalyticsPage() {
       setForm(formData);
       setAnalytics(analyticsData);
       setSubmissions(submissionsData);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load analytics");
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateFrom, dateTo, formId]);
 
-  const filterSubmissions = () => {
+  const filterSubmissions = useCallback(() => {
     let filtered = submissions;
     
     if (dateFrom) {
@@ -94,7 +85,15 @@ export default function FormAnalyticsPage() {
     }
     
     setFilteredSubmissions(filtered);
-  };
+  }, [submissions, dateFrom, dateTo]);
+
+  useEffect(() => {
+    loadData();
+  }, [formId, loadData]);
+
+  useEffect(() => {
+    filterSubmissions();
+  }, [submissions, dateFrom, dateTo, filterSubmissions]);
 
   const applyDatePreset = (days: number) => {
     setDateFrom(subDays(new Date(), days));
@@ -485,12 +484,12 @@ export default function FormAnalyticsPage() {
                         {submission.ip_address || 'N/A'}
                       </TableCell>
                       {form?.schema_json.fields.slice(0, 3).map(field => {
-                        const fieldValue = (submission.payload_json as Record<string, any>)[field.id];
+                        const fieldValue = (submission.payload_json as Record<string, unknown>)[field.id];
                         return (
                           <TableCell key={field.id} className="max-w-xs truncate">
                             {Array.isArray(fieldValue)
                               ? fieldValue.join(', ')
-                              : fieldValue || '-'}
+                              : String(fieldValue || '-')}
                           </TableCell>
                         );
                       })}

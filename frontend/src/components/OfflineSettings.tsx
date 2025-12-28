@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -25,7 +25,7 @@ export function OfflineSettings() {
   const [pendingSubmissions, setPendingSubmissions] = useState<Array<{ id: number; data: Record<string, unknown>; timestamp: string }>>([]);
   const [cacheSize, setCacheSize] = useState(0);
 
-  async function checkInitialState() {
+  const checkInitialState = useCallback(async () => {
     // Check notification permission
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted');
@@ -37,7 +37,7 @@ export function OfflineSettings() {
 
     // Load SMS settings from API
     loadSMSSettings();
-  };
+  }, []);
 
   async function loadSMSSettings() {
     try {
@@ -71,7 +71,7 @@ export function OfflineSettings() {
     checkInitialState();
     checkPendingSubmissions();
     checkCacheSize();
-  }, []);
+  }, [checkInitialState]);
 
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {

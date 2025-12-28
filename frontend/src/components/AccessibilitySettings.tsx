@@ -18,17 +18,18 @@ import {
 } from '@/lib/accessibility';
 
 export function AccessibilitySettings() {
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [fontSize, setFontSize] = useState(16);
-  const [keyboardNav, setKeyboardNav] = useState(true);
-  const [focusIndicator, setFocusIndicator] = useState(true);
-  const [auditResults, setAuditResults] = useState<{ valid: boolean; issues: Array<{ category: string; issues: string[] }> } | null>(null);
-
   const loadPreferences = () => {
     const saved = localStorage.getItem('a11yPreferences');
     return saved ? JSON.parse(saved) : {};
   };
+
+  const prefs = loadPreferences();
+  const [reducedMotion, setReducedMotion] = useState(prefs.reducedMotion || prefersReducedMotion());
+  const [highContrast, setHighContrast] = useState(prefs.highContrast || prefersHighContrast());
+  const [fontSize, setFontSize] = useState(prefs.fontSize || 16);
+  const [keyboardNav, setKeyboardNav] = useState(prefs.keyboardNav !== false);
+  const [focusIndicator, setFocusIndicator] = useState(prefs.focusIndicator !== false);
+  const [auditResults, setAuditResults] = useState<{ valid: boolean; issues: Array<{ category: string; issues: string[] }> } | null>(null);
 
   const savePreferences = (prefs: Record<string, unknown>) => {
     localStorage.setItem('a11yPreferences', JSON.stringify(prefs));

@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { WifiOff, Wifi, Download } from 'lucide-react';
-import { checkOnlineStatus, setupOfflineDetection, showInstallPrompt, isStandalone } from '@/lib/pwa';
+import { setupOfflineDetection, showInstallPrompt, isStandalone } from '@/lib/pwa';
 
 export function PWAPrompt() {
   const [showInstall, setShowInstall] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(isStandalone());
 
   useEffect(() => {
     // Check if already installed
@@ -22,7 +22,7 @@ export function PWAPrompt() {
 
     // Check if installable
     let deferredPrompt: any;
-    const handler = (e: any) => {
+    const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt = e;
       if (!isStandalone()) {
@@ -51,9 +51,9 @@ export function PWAPrompt() {
       {isOffline && (
         <Alert variant="destructive" className="fixed top-4 right-4 max-w-md z-50">
           <WifiOff className="h-4 w-4" />
-          <AlertTitle>You're offline</AlertTitle>
+          <AlertTitle>You&apos;re offline</AlertTitle>
           <AlertDescription>
-            Some features may not be available. Your changes will be synced when you're back online.
+            Some features may not be available. Your changes will be synced when you&apos;re back online.
           </AlertDescription>
         </Alert>
       )}

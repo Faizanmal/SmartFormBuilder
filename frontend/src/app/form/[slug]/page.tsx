@@ -59,31 +59,12 @@ export default function PublicFormPage() {
   const [savingDraft, setSavingDraft] = useState(false);
 
   useEffect(() => {
-    loadForm();
-  }, [slug]);
-
-  useEffect(() => {
-    if (form) {
-      updateVisibleFields();
-      
-      // Check if multi-step
-      const multiStep = form.schema_json.settings?.multiStep || false;
-      setIsMultiStep(multiStep);
-      
-      if (multiStep && form.schema_json.settings?.steps) {
-        setSteps(form.schema_json.settings.steps);
-      }
-    }
-  }, [formData, form]);
-
-  // Load draft if token is provided
-  useEffect(() => {
     if (draftToken && form) {
       loadDraft(draftToken);
     }
   }, [draftToken, form]);
 
-  const loadForm = async () => {
+  const loadForm = useCallback(async () => {
     try {
       // Try public endpoint first
       try {
@@ -107,7 +88,7 @@ export default function PublicFormPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
   const initializeForm = (foundForm: Form) => {
     const initialVisible = new Set<string>();
@@ -172,7 +153,7 @@ export default function PublicFormPage() {
     }
   };
 
-  const updateVisibleFields = () => {
+  const updateVisibleFields = useCallback(() => {
     if (!form) return;
 
     const newVisible = new Set<string>();
@@ -216,7 +197,25 @@ export default function PublicFormPage() {
     }
 
     setVisibleFields(newVisible);
-  };
+  }, [form, formData]);
+
+  useEffect(() => {
+    loadForm();
+  }, [slug, loadForm]);
+
+  useEffect(() => {
+    if (form) {
+      updateVisibleFields();
+      
+      // Check if multi-step
+      const multiStep = form.schema_json.settings?.multiStep || false;
+      setIsMultiStep(multiStep);
+      
+      if (multiStep && form.schema_json.settings?.steps) {
+        setSteps(form.schema_json.settings.steps);
+      }
+    }
+  }, [formData, form, updateVisibleFields]);
 
   // Get fields for current step in multi-step form
   const getCurrentStepFields = useCallback(() => {

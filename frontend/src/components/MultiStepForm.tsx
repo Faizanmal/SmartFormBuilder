@@ -219,7 +219,7 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
           <Alert className="mb-6">
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>
-              Welcome back! Your progress has been restored. You're {progress}% complete.
+              Welcome back! Your progress has been restored. You&apos;re {progress}% complete.
             </AlertDescription>
           </Alert>
         )}

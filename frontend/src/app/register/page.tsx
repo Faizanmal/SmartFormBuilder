@@ -47,10 +47,10 @@ export default function RegisterPage() {
       
       toast.success(`Welcome to FormForge, ${user.first_name || user.username}!`);
       router.push("/dashboard");
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.email?.[0] || 
-                      error.response?.data?.username?.[0] ||
-                      error.response?.data?.password?.[0] ||
+    } catch (error: unknown) {
+      const errorMsg = (error as any).response?.data?.email?.[0] || 
+                      (error as any).response?.data?.username?.[0] ||
+                      (error as any).response?.data?.password?.[0] ||
                       "Registration failed. Please try again.";
       toast.error(errorMsg);
     } finally {

@@ -33,8 +33,8 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       router.push("/dashboard");
     } catch (error: unknown) {
-      const err = error as any;
-      toast.error(err?.response?.data?.detail || "Login failed. Please check your credentials.");
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'detail' in error.response.data ? (error.response.data as { detail: string }).detail : "Login failed. Please check your credentials.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

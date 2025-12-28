@@ -32,4 +32,11 @@ urlpatterns = [
     path('public/draft/<slug:form_slug>/', FormDraftView.as_view({'post': 'create'}), name='public-draft-create'),
     path('public/draft/token/<str:draft_token>/', FormDraftView.as_view({'get': 'retrieve'}), name='public-draft-get'),
     path('public/draft/token/<str:draft_token>/send-link/', FormDraftView.as_view({'post': 'send_resume_link'}), name='public-draft-send-link'),
+    
+    # New advanced features
+    path('advanced/', include('forms.urls_advanced')),
+    path('advanced/', include('forms.urls_advanced_new')),
+    path('features/', include('forms.urls_features')),
+    path('automation/', include('forms.urls_automation')),
+    path('new-features/', include('forms.urls_new_features')),
 ]

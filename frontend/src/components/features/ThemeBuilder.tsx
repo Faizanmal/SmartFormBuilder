@@ -119,7 +119,7 @@ export default function ThemeBuilder({ formId, onSave }: ThemeBuilderProps) {
     <div className="bg-white rounded-lg shadow">
       <div className="p-6 border-b">
         <h2 className="text-2xl font-bold">Theme Builder</h2>
-        <p className="text-gray-600 mt-1">Customize your form's appearance</p>
+        <p className="text-gray-600 mt-1">Customize your form&apos;s appearance</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">

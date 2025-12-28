@@ -3,8 +3,20 @@
  * Export all feature components for easy importing
  */
 
+// Existing components
 export { default as LanguageSelector } from './LanguageSelector';
 export { default as ThemeBuilder } from './ThemeBuilder';
 export { default as IntegrationMarketplace } from './IntegrationMarketplace';
 export { default as CollaborationPanel } from './CollaborationPanel';
 export { default as MobileOptimizationPanel } from './MobileOptimizationPanel';
+
+// New Feature Components - 10 Major Features
+export { PerformanceDashboard } from './PerformanceDashboard';
+export { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard';
+export { AccessibilityCompliance } from './AccessibilityCompliance';
+export { CollaborationTools } from './CollaborationTools';
+export { AutoSaveRecovery } from './AutoSaveRecovery';
+export { DataQualityDashboard } from './DataQualityDashboard';
+export { MobileInteractions } from './MobileInteractions';
+export { AIOptimization } from './AIOptimization';
+export { OfflineSync } from './OfflineSync';

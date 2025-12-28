@@ -105,7 +105,7 @@ export function ConditionalLogicBuilder({
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground text-center">
-              No conditional rules yet. Click "Add Rule" to get started.
+              No conditional rules yet. Click &quot;Add Rule&quot; to get started.
             </p>
           </CardContent>
         </Card>
@@ -249,7 +249,7 @@ export function ConditionalLogicBuilder({
                         {needsValue(rule.operator) && rule.value && (
                           <>
                             {' '}
-                            <span className="font-medium">"{rule.value}"</span>
+                            <span className="font-medium">&quot;{rule.value}&quot;</span>
                           </>
                         )}
                       </p>

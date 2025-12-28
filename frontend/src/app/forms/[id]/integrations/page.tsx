@@ -71,7 +71,7 @@ export default function FormIntegrationsPage() {
         setEmailEnabled(email.is_active);
         setEmailRecipients((email.config as Record<string, any>).recipients?.join(", ") || "");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load integrations");
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ export default function FormIntegrationsPage() {
 
       toast.success("Webhook integration saved");
       loadData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to save webhook");
     }
   };
@@ -135,7 +135,7 @@ export default function FormIntegrationsPage() {
 
       toast.success("Email integration saved");
       loadData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to save email integration");
     }
   };

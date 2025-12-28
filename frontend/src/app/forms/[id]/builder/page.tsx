@@ -276,7 +276,7 @@ export default function FormBuilderPage() {
                   <Card>
                     <CardContent className="pt-6 text-center py-12">
                       <p className="text-muted-foreground mb-4">
-                        No fields yet. Click "Add Field" to get started.
+                        No fields yet. Click &quot;Add Field&quot; to get started.
                       </p>
                       <Button onClick={() => setShowFieldSelector(true)}>
                         <Plus className="h-4 w-4 mr-2" />

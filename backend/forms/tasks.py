@@ -7,6 +7,64 @@ from datetime import timedelta
 
 
 @shared_task
+def process_bulk_action_async(bulk_action_id: str):
+    """Process a bulk action asynchronously"""
+    from forms.services.bulk_action_service import BulkActionService
+    
+    BulkActionService.process_bulk_action(bulk_action_id)
+    return {'bulk_action_id': bulk_action_id, 'status': 'completed'}
+
+
+@shared_task
+def generate_scheduled_reports():
+    """Generate and send scheduled reports"""
+    from forms.models_new_features import ScheduledReport
+    from forms.services.new_features_combined_service import ScheduledReportService
+    
+    # Get reports that are due
+    due_reports = ScheduledReport.objects.filter(
+        is_active=True,
+        next_run_at__lte=timezone.now()
+    )
+    
+    for report in due_reports:
+        ScheduledReportService.generate_report(str(report.id))
+    
+    return {'processed': due_reports.count()}
+
+
+@shared_task
+def check_workflow_sla_breaches():
+    """Check for SLA breaches in workflow pipelines"""
+    from forms.models_new_features import SubmissionWorkflowStatus
+    
+    # Find submissions that have breached SLA
+    breached = SubmissionWorkflowStatus.objects.filter(
+        is_sla_breached=False,
+        sla_deadline__lt=timezone.now()
+    )
+    
+    for status in breached:
+        status.is_sla_breached = True
+        status.save()
+        # Send notifications if configured
+    
+    return {'breached_count': breached.count()}
+
+
+@shared_task
+def cleanup_expired_ip_reputation_cache():
+    """Clean up expired IP reputation cache entries"""
+    from forms.models_new_features import IPReputationCache
+    
+    deleted_count, _ = IPReputationCache.objects.filter(
+        expires_at__lt=timezone.now()
+    ).delete()
+    
+    return {'deleted': deleted_count}
+
+
+@shared_task
 def process_abandoned_forms():
     """
     Periodic task to identify and process abandoned forms
