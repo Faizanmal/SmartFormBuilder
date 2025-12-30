@@ -42,7 +42,7 @@ export function AddFieldPanel({ onSelect, onClose }: AddFieldPanelProps) {
               onClick={() => onSelect(field.value)}
             >
               <div className="flex items-start gap-3 w-full">
-                <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <Icon className="h-5 w-5 mt-0.5 shrink-0" />
                 <div className="text-left flex-1">
                   <div className="font-medium">{field.label}</div>
                   <div className="text-xs text-muted-foreground">{field.description}</div>

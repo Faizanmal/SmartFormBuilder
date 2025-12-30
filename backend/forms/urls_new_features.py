@@ -16,7 +16,7 @@ router.register(r'external-api-providers', viewsets.ModelViewSet, basename='exte
 router.register(r'bulk-actions', BulkActionViewSet, basename='bulk-action')
 
 # Spam Detection
-router.register(r'spam-configs', SpamDetectionConfigViewSet, basename='spam-config')
+# router.register(r'spam-configs', SpamDetectionConfigViewSet, basename='spam-config')
 
 # External Validation
 router.register(r'validation-rules', ExternalValidationRuleViewSet, basename='validation-rule')
@@ -31,10 +31,10 @@ router.register(r'workflow-pipelines', WorkflowPipelineViewSet, basename='workfl
 router.register(r'submission-workflow-status', SubmissionWorkflowStatusViewSet, basename='submission-workflow')
 
 # Optimization Recommendations
-router.register(r'optimization-recommendations', FormOptimizationRecommendationViewSet, basename='optimization-recommendation')
+# router.register(r'optimization-recommendations', FormOptimizationRecommendationViewSet, basename='optimization-recommendation')
 
 # Scheduled Reports
-router.register(r'scheduled-reports', ScheduledReportViewSet, basename='scheduled-report')
+# router.register(r'scheduled-reports', ScheduledReportViewSet, basename='scheduled-report')
 
 # Submission Comments
 router.register(r'submission-comments', SubmissionCommentViewSet, basename='submission-comment')

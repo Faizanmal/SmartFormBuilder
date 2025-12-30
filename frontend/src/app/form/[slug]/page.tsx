@@ -592,7 +592,7 @@ export default function PublicFormPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -607,7 +607,7 @@ export default function PublicFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
@@ -671,7 +671,7 @@ export default function PublicFormPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setShowSaveDialog(true)}
-                    className="flex-shrink-0"
+                    className="shrink-0"
                   >
                     <Save className="mr-2 h-4 w-4" />
                     Save

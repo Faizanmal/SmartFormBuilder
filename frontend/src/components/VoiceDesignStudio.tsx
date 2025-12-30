@@ -270,7 +270,7 @@ export function VoiceDesignStudio({ formId, initialSchema, onSave }: VoiceDesign
               {/* Last Response */}
               {lastResponse && (
                 <div className="p-3 bg-muted rounded-lg flex items-start gap-2">
-                  <Volume2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <Volume2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <p className="text-sm">{lastResponse}</p>
                 </div>
               )}
@@ -331,9 +331,9 @@ export function VoiceDesignStudio({ formId, initialSchema, onSave }: VoiceDesign
                   {[...commandHistory].reverse().map((cmd, index) => (
                     <div key={index} className="flex items-start gap-2 p-2 bg-muted rounded">
                       {cmd.success !== false ? (
-                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                        <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{cmd.transcript}</p>

@@ -33,16 +33,16 @@ class BulkActionSerializer(serializers.ModelSerializer):
 
 
 # Spam Detection
-class SpamDetectionConfigSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SpamDetectionConfig
-        fields = '__all__'
+# class SpamDetectionConfigSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = SpamDetectionConfig
+#         fields = '__all__'
 
 
-class SpamDetectionLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SpamDetectionLog
-        fields = '__all__'
+# class SpamDetectionLogSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = SpamDetectionLog
+#         fields = '__all__'
 
 
 # External Validation
@@ -105,35 +105,35 @@ class WorkflowStageTransitionSerializer(serializers.ModelSerializer):
 
 
 # Optimization Recommendations
-class FormOptimizationRecommendationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FormOptimizationRecommendation
-        fields = '__all__'
+# class FormOptimizationRecommendationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FormOptimizationRecommendation
+#         fields = '__all__'
 
 
-class FormBenchmarkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FormBenchmark
-        fields = '__all__'
+# class FormBenchmarkSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FormBenchmark
+#         fields = '__all__'
 
 
-class OptimizationReportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OptimizationReport
-        fields = '__all__'
+# class OptimizationReportSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OptimizationReport
+#         fields = '__all__'
 
 
 # Scheduled Reports
-class ScheduledReportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ScheduledReport
-        fields = '__all__'
+# class ScheduledReportSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ScheduledReport
+#         fields = '__all__'
 
 
-class ReportExecutionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReportExecution
-        fields = '__all__'
+# class ReportExecutionSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ReportExecution
+#         fields = '__all__'
 
 
 # Submission Comments

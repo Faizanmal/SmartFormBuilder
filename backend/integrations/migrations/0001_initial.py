@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("forms", "0008_activitylog_autofilltemplate_brandguideline_and_more"),
+        ("forms", "0005_formdraft_formvariant_abtest"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

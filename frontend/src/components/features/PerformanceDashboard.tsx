@@ -59,6 +59,7 @@ interface PerformanceAlert {
   threshold_value: number;
   acknowledged: boolean;
   created_at: string;
+  form_id: string;
 }
 
 interface TimeSeriesData {
@@ -97,6 +98,7 @@ export function PerformanceDashboard({ formId }: PerformanceDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cacheConfig, setCacheConfig] = useState<{
+    id: string;
     strategy: string;
     ttl: number;
     lazy_loading_enabled: boolean;

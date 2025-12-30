@@ -123,7 +123,7 @@ export default function CollaborationPanel({ formId }: CollaborationPanelProps) 
                 key={collab.id}
                 className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold">
                   {collab.user_email?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
@@ -204,7 +204,7 @@ export default function CollaborationPanel({ formId }: CollaborationPanelProps) 
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-semibold">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-semibold">
                         {comment.user_name?.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1">

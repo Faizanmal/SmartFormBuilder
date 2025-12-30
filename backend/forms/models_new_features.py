@@ -13,7 +13,15 @@ New advanced features models:
 """
 from django.db import models
 import uuid
-from django.contrib.postgres.fields import ArrayField
+from django.conf import settings
+
+# Database-agnostic array field
+if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    from django.contrib.postgres.fields import ArrayField
+    ArrayFieldType = ArrayField
+else:
+    # For SQLite and other databases, use JSONField to store arrays
+    ArrayFieldType = models.JSONField
 
 
 # ============================================================================
@@ -33,7 +41,7 @@ class FieldDependency(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='field_dependencies')
     source_field_id = models.CharField(max_length=100, help_text="Field that triggers the dependency")
-    target_field_ids = ArrayField(
+    target_field_ids = ArrayFieldType(
         models.CharField(max_length=100),
         default=list,
         help_text="Fields to be auto-populated"
@@ -169,7 +177,7 @@ class BulkAction(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     # Selection criteria
-    submission_ids = ArrayField(
+    submission_ids = ArrayFieldType(
         models.UUIDField(),
         default=list,
         help_text="Specific submission IDs"
@@ -264,12 +272,12 @@ class SpamDetectionConfig(models.Model):
         default=list,
         help_text="Regex patterns for suspicious content"
     )
-    blacklisted_emails = ArrayField(
+    blacklisted_emails = ArrayFieldType(
         models.CharField(max_length=255),
         default=list,
         blank=True
     )
-    blacklisted_domains = ArrayField(
+    blacklisted_domains = ArrayFieldType(
         models.CharField(max_length=255),
         default=list,
         blank=True
@@ -310,7 +318,7 @@ class SpamDetectionLog(models.Model):
     # Detection results
     risk_score = models.IntegerField(default=0, help_text="0-100 spam probability")
     is_spam = models.BooleanField(default=False)
-    detection_reasons = ArrayField(
+    detection_reasons = ArrayFieldType(
         models.CharField(max_length=200),
         default=list,
         help_text="Reasons for spam detection"
@@ -483,7 +491,7 @@ class FormTestSuite(models.Model):
     description = models.TextField(blank=True)
     
     # Test configuration
-    test_types = ArrayField(
+    test_types = ArrayFieldType(
         models.CharField(max_length=50),
         default=list,
         help_text="Types of tests to run: accessibility, performance, integration, etc."
@@ -669,19 +677,19 @@ class WorkflowStage(models.Model):
     icon = models.CharField(max_length=50, blank=True)
     
     # Stage permissions
-    can_view_roles = ArrayField(
+    can_view_roles = ArrayFieldType(
         models.CharField(max_length=50),
         default=list,
         blank=True,
         help_text="Roles that can view submissions in this stage"
     )
-    can_edit_roles = ArrayField(
+    can_edit_roles = ArrayFieldType(
         models.CharField(max_length=50),
         default=list,
         blank=True,
         help_text="Roles that can edit submissions in this stage"
     )
-    can_progress_roles = ArrayField(
+    can_progress_roles = ArrayFieldType(
         models.CharField(max_length=50),
         default=list,
         blank=True,
@@ -694,7 +702,7 @@ class WorkflowStage(models.Model):
     # Notifications
     notify_on_enter = models.BooleanField(default=False)
     notify_on_sla_breach = models.BooleanField(default=True)
-    notification_recipients = ArrayField(
+    notification_recipients = ArrayFieldType(
         models.EmailField(),
         default=list,
         blank=True
@@ -729,7 +737,7 @@ class SubmissionWorkflowStatus(models.Model):
     
     # Metadata
     notes = models.TextField(blank=True)
-    tags = ArrayField(
+    tags = ArrayFieldType(
         models.CharField(max_length=100),
         default=list,
         blank=True
@@ -819,7 +827,7 @@ class FormOptimizationRecommendation(models.Model):
     
     # Implementation
     changes_json = models.JSONField(default=dict, help_text="Specific changes to apply")
-    affected_fields = ArrayField(
+    affected_fields = ArrayFieldType(
         models.CharField(max_length=100),
         default=list,
         blank=True
@@ -868,12 +876,12 @@ class FormBenchmark(models.Model):
     category_avg_field_count = models.FloatField()
     
     # Insights
-    strengths = ArrayField(
+    strengths = ArrayFieldType(
         models.CharField(max_length=200),
         default=list,
         blank=True
     )
-    weaknesses = ArrayField(
+    weaknesses = ArrayFieldType(
         models.CharField(max_length=200),
         default=list,
         blank=True
@@ -911,7 +919,7 @@ class OptimizationReport(models.Model):
     report_data = models.JSONField(default=dict, help_text="Detailed report content")
     
     # Distribution
-    sent_to_users = ArrayField(
+    sent_to_users = ArrayFieldType(
         models.UUIDField(),
         default=list,
         blank=True,
@@ -1038,7 +1046,7 @@ class CustomFormTemplate(models.Model):
     
     # Categorization
     category = models.CharField(max_length=100)
-    tags = ArrayField(
+    tags = ArrayFieldType(
         models.CharField(max_length=50),
         default=list,
         blank=True

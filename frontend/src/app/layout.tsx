@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   title: "SmartFormBuilder - Create Intelligent Forms",
   description: "Build, manage, and analyze forms with AI-powered features",
   manifest: "/manifest.json",
-  themeColor: "#667eea",
 };
 
 export const viewport = {
@@ -25,6 +24,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: "#667eea",
 };
 
 export default function RootLayout({
@@ -36,7 +36,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#667eea" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body

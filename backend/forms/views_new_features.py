@@ -89,25 +89,25 @@ class BulkActionViewSet(viewsets.ModelViewSet):
         return Response({'cancelled': success})
 
 
-class SpamDetectionConfigViewSet(viewsets.ModelViewSet):
-    """ViewSet for spam detection configuration"""
-    serializer_class = SpamDetectionConfigSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return SpamDetectionConfig.objects.filter(form__user=self.request.user)
-    
-    @action(detail=True, methods=['get'])
-    def statistics(self, request, pk=None):
-        """Get spam detection statistics"""
-        config = self.get_object()
-        days = int(request.query_params.get('days', 30))
-        
-        stats = SpamDetectionService.get_spam_statistics(
-            str(config.form_id), days
-        )
-        
-        return Response(stats)
+# class SpamDetectionConfigViewSet(viewsets.ModelViewSet):
+#     """ViewSet for spam detection configuration"""
+#     serializer_class = SpamDetectionConfigSerializer
+#     permission_classes = [IsAuthenticated]
+#     
+#     def get_queryset(self):
+#         return SpamDetectionConfig.objects.filter(form__user=self.request.user)
+#     
+#     @action(detail=True, methods=['get'])
+#     def statistics(self, request, pk=None):
+#         """Get spam detection statistics"""
+#         config = self.get_object()
+#         days = int(request.query_params.get('days', 30))
+#         
+#         stats = SpamDetectionService.get_spam_statistics(
+#             str(config.form_id), days
+#         )
+#         
+#         return Response(stats)
 
 
 class ExternalValidationRuleViewSet(viewsets.ModelViewSet):
@@ -240,69 +240,69 @@ class SubmissionWorkflowStatusViewSet(viewsets.ModelViewSet):
         return Response(kanban_data)
 
 
-class FormOptimizationRecommendationViewSet(viewsets.ModelViewSet):
-    """ViewSet for optimization recommendations"""
-    serializer_class = FormOptimizationRecommendationSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return FormOptimizationRecommendation.objects.filter(
-            form__user=self.request.user
-        )
-    
-    @action(detail=False, methods=['post'])
-    def generate(self, request):
-        """Generate recommendations for a form"""
-        form_id = request.data.get('form_id')
-        
-        recommendations = OptimizationService.generate_recommendations(form_id)
-        serializer = self.get_serializer(recommendations, many=True)
-        
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def apply(self, request, pk=None):
-        """Apply a recommendation"""
-        recommendation = self.get_object()
-        
-        # Apply the changes to the form
-        form = recommendation.form
-        # Apply logic based on recommendation_type and changes_json
-        
-        recommendation.status = 'applied'
-        recommendation.applied_at = timezone.now()
-        recommendation.applied_by = request.user
-        recommendation.save()
-        
-        return Response({'status': 'applied'})
-    
-    @action(detail=True, methods=['post'])
-    def dismiss(self, request, pk=None):
-        """Dismiss a recommendation"""
-        recommendation = self.get_object()
-        recommendation.status = 'dismissed'
-        recommendation.save()
-        
-        return Response({'status': 'dismissed'})
+# class FormOptimizationRecommendationViewSet(viewsets.ModelViewSet):
+#     """ViewSet for optimization recommendations"""
+#     serializer_class = FormOptimizationRecommendationSerializer
+#     permission_classes = [IsAuthenticated]
+#     
+#     def get_queryset(self):
+#         return FormOptimizationRecommendation.objects.filter(
+#             form__user=self.request.user
+#         )
+#     
+#     @action(detail=False, methods=['post'])
+#     def generate(self, request):
+#         """Generate recommendations for a form"""
+#         form_id = request.data.get('form_id')
+#         
+#         recommendations = OptimizationService.generate_recommendations(form_id)
+#         serializer = self.get_serializer(recommendations, many=True)
+#         
+#         return Response(serializer.data)
+#     
+#     @action(detail=True, methods=['post'])
+#     def apply(self, request, pk=None):
+#         """Apply a recommendation"""
+#         recommendation = self.get_object()
+#         
+#         # Apply the changes to the form
+#         form = recommendation.form
+#         # Apply logic based on recommendation_type and changes_json
+#         
+#         recommendation.status = 'applied'
+#         recommendation.applied_at = timezone.now()
+#         recommendation.applied_by = request.user
+#         recommendation.save()
+#         
+#         return Response({'status': 'applied'})
+#     
+#     @action(detail=True, methods=['post'])
+#     def dismiss(self, request, pk=None):
+#         """Dismiss a recommendation"""
+#         recommendation = self.get_object()
+#         recommendation.status = 'dismissed'
+#         recommendation.save()
+#         
+#         return Response({'status': 'dismissed'})
 
 
-class ScheduledReportViewSet(viewsets.ModelViewSet):
-    """ViewSet for scheduled reports"""
-    serializer_class = ScheduledReportSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return ScheduledReport.objects.filter(user=self.request.user)
-    
-    @action(detail=True, methods=['post'])
-    def run_now(self, request, pk=None):
-        """Manually trigger report generation"""
-        scheduled_report = self.get_object()
-        
-        execution = ScheduledReportService.generate_report(str(scheduled_report.id))
-        serializer = ReportExecutionSerializer(execution)
-        
-        return Response(serializer.data)
+# class ScheduledReportViewSet(viewsets.ModelViewSet):
+#     """ViewSet for scheduled reports"""
+#     serializer_class = ScheduledReportSerializer
+#     permission_classes = [IsAuthenticated]
+#     
+#     def get_queryset(self):
+#         return ScheduledReport.objects.filter(user=self.request.user)
+#     
+#     @action(detail=True, methods=['post'])
+#     def run_now(self, request, pk=None):
+#         """Manually trigger report generation"""
+#         scheduled_report = self.get_object()
+#         
+#         execution = ScheduledReportService.generate_report(str(scheduled_report.id))
+#         serializer = ReportExecutionSerializer(execution)
+#         
+#         return Response(serializer.data)
 
 
 class SubmissionCommentViewSet(viewsets.ModelViewSet):
