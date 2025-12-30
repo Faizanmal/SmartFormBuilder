@@ -142,6 +142,37 @@ export function CollaborationTools({ formId, currentUserEmail }: CollaborationTo
     }
   }, [formId]);
 
+  const handleWebSocketMessage = (data: unknown) => {
+    const d = data as any; // temporary
+    switch (d.type) {
+      case 'cursor_update':
+        setActiveSessions(prev =>
+          prev.map(s =>
+            s.user_email === d.user_email
+              ? { ...s, cursor_position: d.position, active_field: d.field }
+              : s
+          )
+        );
+        break;
+      case 'user_joined':
+        fetchActiveSessions();
+        break;
+      case 'user_left':
+        setActiveSessions(prev =>
+          prev.filter(s => s.user_email !== d.user_email)
+        );
+        break;
+      case 'change':
+        fetchChanges();
+        break;
+      case 'comment':
+        fetchComments();
+        break;
+      default:
+        break;
+    }
+  };
+
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
@@ -172,35 +203,7 @@ export function CollaborationTools({ formId, currentUserEmail }: CollaborationTo
     return () => {
       wsRef.current?.close();
     };
-  }, [fetchCollaborators, fetchActiveSessions, fetchChanges, fetchComments, formId]);
-
-  const handleWebSocketMessage = (data: any) => {
-    switch (data.type) {
-      case 'cursor_update':
-        setActiveSessions(prev =>
-          prev.map(s =>
-            s.user_email === data.user_email
-              ? { ...s, cursor_position: data.position, active_field: data.field }
-              : s
-          )
-        );
-        break;
-      case 'user_joined':
-        fetchActiveSessions();
-        break;
-      case 'user_left':
-        setActiveSessions(prev =>
-          prev.filter(s => s.user_email !== data.user_email)
-        );
-        break;
-      case 'change':
-        fetchChanges();
-        break;
-      case 'comment':
-        fetchComments();
-        break;
-    }
-  };
+  }, [fetchCollaborators, fetchActiveSessions, fetchChanges, fetchComments, formId, handleWebSocketMessage]);
 
   const inviteCollaborator = async () => {
     if (!newCollaboratorEmail) return;

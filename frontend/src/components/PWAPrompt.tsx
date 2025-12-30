@@ -12,9 +12,6 @@ export function PWAPrompt() {
   const [isInstalled, setIsInstalled] = useState(isStandalone());
 
   useEffect(() => {
-    // Check if already installed
-    setIsInstalled(isStandalone());
-
     // Setup offline detection
     setupOfflineDetection((online) => {
       setIsOffline(!online);

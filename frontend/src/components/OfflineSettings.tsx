@@ -25,6 +25,19 @@ export function OfflineSettings() {
   const [pendingSubmissions, setPendingSubmissions] = useState<Array<{ id: number; data: Record<string, unknown>; timestamp: string }>>([]);
   const [cacheSize, setCacheSize] = useState(0);
 
+  async function loadSMSSettings() {
+    try {
+      const response = await fetch('/api/users/sms-settings');
+      if (response.ok) {
+        const data = await response.json();
+        setSmsEnabled(data.enabled);
+        setPhoneNumber(data.phone_number || '');
+      }
+    } catch (error) {
+      console.error('Failed to load SMS settings:', error);
+    }
+  }
+
   const checkInitialState = useCallback(async () => {
     // Check notification permission
     if ('Notification' in window) {
@@ -38,19 +51,6 @@ export function OfflineSettings() {
     // Load SMS settings from API
     loadSMSSettings();
   }, []);
-
-  async function loadSMSSettings() {
-    try {
-      const response = await fetch('/api/users/sms-settings');
-      if (response.ok) {
-        const data = await response.json();
-        setSmsEnabled(data.enabled);
-        setPhoneNumber(data.phone_number || '');
-      }
-    } catch (error) {
-      console.error('Failed to load SMS settings:', error);
-    }
-  }
 
   async function checkPendingSubmissions() {
     const storage = new OfflineStorage();

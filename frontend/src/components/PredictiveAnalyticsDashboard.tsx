@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,9 +75,9 @@ export function PredictiveAnalyticsDashboard({ formId }: PredictiveAnalyticsDash
 
   useEffect(() => {
     fetchAllData();
-  }, [formId, forecastDays]);
+  }, [formId, forecastDays, fetchAllData]);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([
@@ -89,7 +89,7 @@ export function PredictiveAnalyticsDashboard({ formId }: PredictiveAnalyticsDash
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchForecast, fetchAnomalies, fetchTrends, fetchInsights]);
 
   const fetchForecast = async () => {
     try {

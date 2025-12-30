@@ -3,7 +3,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -16,7 +16,7 @@ interface FormStep {
   title: string;
   description: string;
   fields: string[];
-  conditional_logic?: any;
+  conditional_logic?: unknown;
 }
 
 interface MultiStepFormProps {
@@ -25,11 +25,11 @@ interface MultiStepFormProps {
     title: string;
     description: string;
     steps: FormStep[];
-    fields: any[];
+    fields: unknown[];
   };
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: unknown) => Promise<void>;
   autoSave?: boolean;
-  resumeData?: any;
+  resumeData?: unknown;
 }
 
 export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeData }: MultiStepFormProps) {
@@ -54,9 +54,9 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
     }, 3000); // Auto-save after 3 seconds of inactivity
 
     return () => clearTimeout(saveTimer);
-  }, [formData, currentStep, autoSave]);
+  }, [formData, currentStep, autoSave, handleAutoSave]);
 
-  const handleAutoSave = async () => {
+  const handleAutoSave = useCallback(async () => {
     if (Object.keys(formData).length === 0) return;
 
     setIsSaving(true);
@@ -83,7 +83,7 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [formData, formSchema.id, currentStep]);
 
   const validateStep = (): boolean => {
     const stepErrors: Record<string, string> = {};
@@ -130,7 +130,7 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
     }
   };
 
-  const handleFieldChange = (fieldId: string, value: any) => {
+  const handleFieldChange = (fieldId: string, value: unknown) => {
     setFormData({ ...formData, [fieldId]: value });
     // Clear error for this field
     if (errors[fieldId]) {

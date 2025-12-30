@@ -20,3 +20,13 @@ export { DataQualityDashboard } from './DataQualityDashboard';
 export { MobileInteractions } from './MobileInteractions';
 export { AIOptimization } from './AIOptimization';
 export { OfflineSync } from './OfflineSync';
+
+// Emerging Technology Features (2024+)
+export { AILayoutOptimizer } from './AILayoutOptimizer';
+export { VoiceMultimodalController } from './VoiceMultimodalController';
+export { SecurityComplianceDashboard } from './SecurityComplianceDashboard';
+export { AutomationIntegrationHub } from './AutomationIntegrationHub';
+export { MobilePWAController } from './MobilePWAController';
+export { UXCollaborationSuite } from './UXCollaborationSuite';
+export { PerformanceDeveloperTools } from './PerformanceDeveloperTools';
+export { EmergingFeaturesDashboard } from './EmergingFeaturesDashboard';

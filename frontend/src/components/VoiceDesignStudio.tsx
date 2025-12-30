@@ -48,7 +48,7 @@ export function VoiceDesignStudio({ formId, initialSchema, onSave }: VoiceDesign
         endSession(false);
       }
     };
-  }, []);
+  }, [startSession, endSession, sessionToken]);
 
   const startSession = async () => {
     try {

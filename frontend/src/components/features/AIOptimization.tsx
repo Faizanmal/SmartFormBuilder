@@ -383,7 +383,7 @@ export function AIOptimization({ formId }: AIOptimizationProps) {
                     <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
                     <p className="font-medium">No pending suggestions</p>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Click "Generate Suggestions" to get AI recommendations
+                      Click &quot;Generate Suggestions&quot; to get AI recommendations
                     </p>
                     <Button onClick={generateSuggestions} disabled={generating}>
                       {generating ? (

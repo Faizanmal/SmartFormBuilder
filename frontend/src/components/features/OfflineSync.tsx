@@ -235,7 +235,7 @@ export function OfflineSync({ formId }: OfflineSyncProps) {
             <>
               <Wifi className="h-5 w-5 text-green-600" />
               <div>
-                <p className="font-medium text-green-800">You're Online</p>
+                <p className="font-medium text-green-800">You&apos;re Online</p>
                 <p className="text-sm text-green-600">All changes will sync automatically</p>
               </div>
             </>
@@ -243,7 +243,7 @@ export function OfflineSync({ formId }: OfflineSyncProps) {
             <>
               <WifiOff className="h-5 w-5 text-yellow-600" />
               <div>
-                <p className="font-medium text-yellow-800">You're Offline</p>
+                <p className="font-medium text-yellow-800">You&apos;re Offline</p>
                 <p className="text-sm text-yellow-600">Changes will sync when you reconnect</p>
               </div>
             </>
@@ -548,7 +548,7 @@ export function OfflineSync({ formId }: OfflineSyncProps) {
           <DialogHeader>
             <DialogTitle>Resolve Conflict</DialogTitle>
             <DialogDescription>
-              Choose which version to keep for field "{selectedConflict?.field_id}"
+              Choose which version to keep for field &quot;{selectedConflict?.field_id}&quot;
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-4">
