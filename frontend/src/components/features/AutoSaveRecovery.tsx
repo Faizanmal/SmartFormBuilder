@@ -44,9 +44,9 @@ interface AutoSave {
   form_id?: string;
   temp_id?: string;
   title: string;
-  schema_json: any;
-  settings_json: any;
-  editor_state: any;
+  schema_json: Record<string, unknown>;
+  settings_json: Record<string, unknown>;
+  editor_state: Record<string, unknown>;
   is_recovered: boolean;
   last_saved_at: string;
 }
@@ -70,9 +70,9 @@ interface DraftSchedule {
 
 interface AutoSaveRecoveryProps {
   formId?: string;
-  currentSchema?: any;
-  currentSettings?: any;
-  onRecover?: (schema: any, settings: any) => void;
+  currentSchema?: Record<string, unknown>;
+  currentSettings?: Record<string, unknown>;
+  onRecover?: (schema: Record<string, unknown>, settings: Record<string, unknown>) => void;
 }
 
 const AUTOSAVE_INTERVAL = 30000; // 30 seconds

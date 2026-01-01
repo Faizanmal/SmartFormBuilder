@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formsApi, integrationsApi } from "@/lib/api-client";
 import type { Form, Integration } from "@/types";
@@ -42,11 +42,7 @@ export default function FormIntegrationsPage() {
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, [formId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [formData, integrationsData] = await Promise.all([
         formsApi.get(formId),
@@ -58,25 +54,32 @@ export default function FormIntegrationsPage() {
       // Load existing integrations into state
       const webhook = integrationsData.find(i => i.integration_type === "webhook");
       if (webhook && webhook.config) {
-        setWebhookUrl((webhook.config as Record<string, any>).url || "");
-        setWebhookSecret((webhook.config as Record<string, any>).secret || "");
+        const cfg = webhook.config as Record<string, unknown>;
+        setWebhookUrl(String(cfg.url || ""));
+        setWebhookSecret(String(cfg.secret || ""));
         
         // Load webhook logs
         const logs = await integrationsApi.getWebhookLogs(webhook.id);
-        setWebhookLogs((logs as any[]).slice(0, 10));  // Get last 10
+        setWebhookLogs((logs as WebhookLog[]).slice(0, 10));  // Get last 10
       }
 
       const email = integrationsData.find(i => i.integration_type === "email");
       if (email && email.config) {
         setEmailEnabled(email.is_active);
-        setEmailRecipients((email.config as Record<string, any>).recipients?.join(", ") || "");
+        const ecfg = email.config as Record<string, unknown>;
+        const recipients = Array.isArray(ecfg.recipients) ? (ecfg.recipients as string[]) : [];
+        setEmailRecipients(recipients.join(", ") || "");
       }
     } catch {
       toast.error("Failed to load integrations");
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const saveWebhook = async () => {
     if (!webhookUrl) {
@@ -395,7 +398,7 @@ is_valid = verify_webhook(
                           )}
                         </TableCell>
                         <TableCell>
-                          {(log as any).response_status_code || '-'}
+                          {log.response_code || '-'}
                         </TableCell>
                         <TableCell className="text-right">
                           {log.status === 'failed' && (

@@ -68,9 +68,12 @@ export function OfflineSettings() {
   }
 
   useEffect(() => {
-    checkInitialState();
-    checkPendingSubmissions();
-    checkCacheSize();
+    const t = setTimeout(() => {
+      checkInitialState();
+      checkPendingSubmissions();
+      checkCacheSize();
+    }, 0);
+    return () => clearTimeout(t);
   }, [checkInitialState]);
 
   const handleNotificationToggle = async (enabled: boolean) => {

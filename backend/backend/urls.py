@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/v1/pwa/", include('forms.urls_pwa')),  # PWA features
     path("api/v1/automation/", include('forms.urls_automation')),  # Automation features
     path("api/v1/features/", include('forms.urls_features')),  # 10 advanced features dashboard
+    path("api/v1/", include('forms.urls_interactive')),  # Interactive features (collaboration, gamification, etc.)
     path("api/v1/users/", include('users.urls')),
     path("api/v1/integrations/", include('integrations.urls')),
 ]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formsApi } from "@/lib/api-client";
 import type { Form } from "@/types";
@@ -21,11 +21,7 @@ export default function FormEmbedPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadForm();
-  }, [formId]);
-
-  const loadForm = async () => {
+  const loadForm = useCallback(async () => {
     try {
       const data = await formsApi.get(formId);
       setForm(data);
@@ -34,7 +30,11 @@ export default function FormEmbedPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    loadForm();
+  }, [formId, loadForm]);
 
   const hostedUrl = form ? `${window.location.origin}/form/${form.slug}` : "";
   

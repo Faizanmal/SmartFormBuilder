@@ -11,12 +11,12 @@ Views for Advanced Features Dashboard:
 - Smart Form Recovery & Auto-Save
 - Integration Marketplace
 """
-from rest_framework import viewsets, status, permissions, views
+from rest_framework import viewsets, permissions, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
-from django.db.models import Avg, Count, Sum, Q, F
+from django.db.models import Avg, Sum, Q
 from django.shortcuts import get_object_or_404
 from datetime import timedelta
 import logging
@@ -27,8 +27,7 @@ from forms.models_performance import (
     PerformanceAlert, AssetOptimization
 )
 from forms.models_analytics import (
-    FormHeatmapData, SessionRecording, SessionEvent,
-    DropOffAnalysis, ABTestResult, BehaviorInsight,
+    SessionRecording, DropOffAnalysis, ABTestResult, BehaviorInsight,
     FormFunnel, FunnelStepMetric
 )
 from forms.models_accessibility import (
@@ -36,27 +35,23 @@ from forms.models_accessibility import (
     UserAccessibilityPreference, ComplianceReport
 )
 from forms.models_mobile import (
-    MobileOptimization, GeolocationField, OfflineSubmission,
-    PushNotificationSubscription, FormNotification
+    MobileOptimization
 )
 from forms.models_collaboration import (
     FormCollaborator, FormEditSession, FormChange,
-    FormComment, FormReviewWorkflow, FormReview
+    FormComment
 )
 from forms.models_autosave import (
-    FormBuilderAutoSave, FormBuilderCrashRecovery,
-    FormPublishSchedule, DraftVersion, OfflineFormDraft
+    FormBuilderAutoSave, FormBuilderCrashRecovery
 )
 from forms.models_data_quality import (
-    DataQualityScore, DuplicateDetection,
-    ExternalValidation, DataCleansingRule, ValidationRule
+    ExternalValidation, DataCleansingRule
 )
 from forms.models_predictive import (
-    FieldPrediction, SmartDefault, CompletionPrediction, ProgressiveDisclosure
+    SmartDefault, CompletionPrediction, ProgressiveDisclosure
 )
 from forms.models_integrations_marketplace import (
-    IntegrationProvider, IntegrationConnection, IntegrationWorkflow,
-    WebhookEndpoint, WebhookLog, IntegrationTemplate
+    IntegrationTemplate
 )
 from forms.services.performance_service import PerformanceService
 from forms.services.advanced_analytics_service import (

@@ -333,7 +333,7 @@ export function PerformanceDeveloperTools({ formId }: PerformanceDeveloperToolsP
                   {performanceData.bottlenecks && performanceData.bottlenecks.length > 0 && (
                     <div className="space-y-2">
                       <Label className="text-sm">Detected Bottlenecks</Label>
-                      {performanceData.bottlenecks.map((bottleneck: any, index: number) => (
+                      {(performanceData.bottlenecks as { issue: string; recommendation?: string }[]).map((bottleneck, index: number) => (
                         <div key={index} className="flex items-start gap-2 p-3 border border-orange-200 bg-orange-50 rounded-lg">
                           <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
                           <div className="flex-1">

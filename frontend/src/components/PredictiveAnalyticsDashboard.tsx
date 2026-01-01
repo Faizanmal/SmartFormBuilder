@@ -73,9 +73,47 @@ export function PredictiveAnalyticsDashboard({ formId }: PredictiveAnalyticsDash
   const [loading, setLoading] = useState(true);
   const [forecastDays, setForecastDays] = useState('7');
 
-  useEffect(() => {
-    fetchAllData();
-  }, [formId, forecastDays, fetchAllData]);
+  const fetchForecast = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/v1/automation/forms/${formId}/analytics/forecast/?days=${forecastDays}`
+      );
+      const data = await response.json();
+      setPredictions(data.predictions || []);
+    } catch (error) {
+      console.error('Failed to fetch forecast:', error);
+    }
+  }, [formId, forecastDays]);
+
+  const fetchAnomalies = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/anomalies/`);
+      const data = await response.json();
+      setAnomalies(data.anomalies || []);
+    } catch (error) {
+      console.error('Failed to fetch anomalies:', error);
+    }
+  }, [formId]);
+
+  const fetchTrends = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/trends/`);
+      const data = await response.json();
+      setTrends(data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch trends:', error);
+    }
+  }, [formId]);
+
+  const fetchInsights = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/insights/`);
+      const data = await response.json();
+      setInsights(data.insights || []);
+    } catch (error) {
+      console.error('Failed to fetch insights:', error);
+    }
+  }, [formId]);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -91,47 +129,9 @@ export function PredictiveAnalyticsDashboard({ formId }: PredictiveAnalyticsDash
     }
   }, [fetchForecast, fetchAnomalies, fetchTrends, fetchInsights]);
 
-  const fetchForecast = async () => {
-    try {
-      const response = await fetch(
-        `/api/v1/automation/forms/${formId}/analytics/forecast/?days=${forecastDays}`
-      );
-      const data = await response.json();
-      setPredictions(data.predictions || []);
-    } catch (error) {
-      console.error('Failed to fetch forecast:', error);
-    }
-  };
-
-  const fetchAnomalies = async () => {
-    try {
-      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/anomalies/`);
-      const data = await response.json();
-      setAnomalies(data.anomalies || []);
-    } catch (error) {
-      console.error('Failed to fetch anomalies:', error);
-    }
-  };
-
-  const fetchTrends = async () => {
-    try {
-      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/trends/`);
-      const data = await response.json();
-      setTrends(data.data || []);
-    } catch (error) {
-      console.error('Failed to fetch trends:', error);
-    }
-  };
-
-  const fetchInsights = async () => {
-    try {
-      const response = await fetch(`/api/v1/automation/forms/${formId}/analytics/insights/`);
-      const data = await response.json();
-      setInsights(data.insights || []);
-    } catch (error) {
-      console.error('Failed to fetch insights:', error);
-    }
-  };
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   const calculateTrendChange = (data: TrendData[], metric: keyof TrendData) => {
     if (data.length < 2) return 0;

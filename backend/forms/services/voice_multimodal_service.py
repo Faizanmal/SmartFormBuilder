@@ -12,11 +12,8 @@ Features:
 import json
 import base64
 import hashlib
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
 from django.conf import settings
-from django.utils import timezone
-from django.core.cache import cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -231,8 +228,6 @@ class VoiceTranscriptionService:
     ) -> Dict[str, Any]:
         """Transcribe using AWS Transcribe"""
         import boto3
-        import tempfile
-        import os
         import time
         
         # Upload to S3 first

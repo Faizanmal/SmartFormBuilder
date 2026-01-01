@@ -48,10 +48,18 @@ export default function RegisterPage() {
       toast.success(`Welcome to FormForge, ${user.first_name || user.username}!`);
       router.push("/dashboard");
     } catch (error: unknown) {
-      const errorMsg = (error as any).response?.data?.email?.[0] || 
-                      (error as any).response?.data?.username?.[0] ||
-                      (error as any).response?.data?.password?.[0] ||
-                      "Registration failed. Please try again.";
+      const getResponseField = (err: unknown, key: string) => {
+        if (typeof err === 'object' && err !== null) {
+          const e = err as Record<string, unknown>;
+          const resp = e.response as Record<string, unknown> | undefined;
+          const data = resp?.data as Record<string, unknown> | undefined;
+          const field = data?.[key];
+          if (Array.isArray(field) && field.length > 0) return String(field[0]);
+        }
+        return null;
+      };
+
+      const errorMsg = getResponseField(error, 'email') || getResponseField(error, 'username') || getResponseField(error, 'password') || "Registration failed. Please try again.";
       toast.error(errorMsg);
     } finally {
       setLoading(false);

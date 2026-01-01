@@ -61,8 +61,8 @@ interface FormChange {
   user_name: string;
   change_type: string;
   field_id: string;
-  previous_value: any;
-  new_value: any;
+  previous_value: unknown;
+  new_value: unknown;
   created_at: string;
 }
 
@@ -142,14 +142,15 @@ export function CollaborationTools({ formId, currentUserEmail }: CollaborationTo
     }
   }, [formId]);
 
-  const handleWebSocketMessage = (data: unknown) => {
-    const d = data as any; // temporary
-    switch (d.type) {
+  const handleWebSocketMessage = useCallback((data: unknown) => {
+    const d = data as Record<string, unknown>;
+    const type = String(d.type || '');
+    switch (type) {
       case 'cursor_update':
         setActiveSessions(prev =>
           prev.map(s =>
-            s.user_email === d.user_email
-              ? { ...s, cursor_position: d.position, active_field: d.field }
+            s.user_email === String(d.user_email || '')
+              ? { ...s, cursor_position: (d.position as { x: number; y: number }) || s.cursor_position, active_field: String(d.field || '') }
               : s
           )
         );
@@ -171,7 +172,7 @@ export function CollaborationTools({ formId, currentUserEmail }: CollaborationTo
       default:
         break;
     }
-  };
+  }, [fetchActiveSessions, fetchChanges, fetchComments]);
 
   useEffect(() => {
     const loadAll = async () => {

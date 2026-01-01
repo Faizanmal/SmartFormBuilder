@@ -11,6 +11,17 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ChevronLeft, ChevronRight, Save, CheckCircle2 } from 'lucide-react';
 
+interface Field {
+  id: string;
+  label?: string;
+  required?: boolean;
+  type?: 'text' | 'email' | 'textarea' | 'select' | 'number' | 'checkbox' | 'radio' | string;
+  placeholder?: string;
+  options?: string[];
+  help?: string;
+  [key: string]: unknown;
+}
+
 interface FormStep {
   step_number: number;
   title: string;
@@ -19,17 +30,22 @@ interface FormStep {
   conditional_logic?: unknown;
 }
 
+interface ResumeData {
+  payload_json?: Record<string, unknown>;
+  resume_token?: string | null;
+}
+
 interface MultiStepFormProps {
   formSchema: {
     id: string;
     title: string;
     description: string;
     steps: FormStep[];
-    fields: unknown[];
+    fields: Field[];
   };
-  onSubmit: (data: unknown) => Promise<void>;
+  onSubmit: (data: Record<string, unknown>) => Promise<void>;
   autoSave?: boolean;
-  resumeData?: unknown;
+  resumeData?: ResumeData;
 }
 
 export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeData }: MultiStepFormProps) {
@@ -41,21 +57,7 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
   const [saveMessage, setSaveMessage] = useState('');
   const [resumeToken, setResumeToken] = useState<string | null>(resumeData?.resume_token || null);
 
-  const totalSteps = formSchema.steps.length;
-  const progress = Math.round((currentStep / totalSteps) * 100);
-  const currentStepData = formSchema.steps[currentStep - 1];
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (!autoSave) return;
-
-    const saveTimer = setTimeout(() => {
-      handleAutoSave();
-    }, 3000); // Auto-save after 3 seconds of inactivity
-
-    return () => clearTimeout(saveTimer);
-  }, [formData, currentStep, autoSave, handleAutoSave]);
-
+  // Auto-save handler (declared before the effect to avoid using before declaration)
   const handleAutoSave = useCallback(async () => {
     if (Object.keys(formData).length === 0) return;
 
@@ -84,6 +86,21 @@ export function MultiStepForm({ formSchema, onSubmit, autoSave = true, resumeDat
       setIsSaving(false);
     }
   }, [formData, formSchema.id, currentStep]);
+
+  const totalSteps = formSchema.steps.length;
+  const progress = Math.round((currentStep / totalSteps) * 100);
+  const currentStepData = formSchema.steps[currentStep - 1];
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (!autoSave) return;
+
+    const saveTimer = setTimeout(() => {
+      handleAutoSave();
+    }, 3000); // Auto-save after 3 seconds of inactivity
+
+    return () => clearTimeout(saveTimer);
+  }, [formData, currentStep, autoSave, handleAutoSave]);
 
   const validateStep = (): boolean => {
     const stepErrors: Record<string, string> = {};

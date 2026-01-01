@@ -52,8 +52,8 @@ interface SyncConflict {
   id: string;
   form_id: string;
   field_id: string;
-  local_value: any;
-  server_value: any;
+  local_value: unknown;
+  server_value: unknown;
   local_timestamp: string;
   server_timestamp: string;
 }

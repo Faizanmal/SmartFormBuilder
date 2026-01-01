@@ -155,7 +155,7 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                             <div key={key} className="text-center">
                               <div
                                 className="w-12 h-12 rounded border-2 border-muted"
-                                style={{ backgroundColor: color as string }}
+                                style={{ backgroundColor: String(color) }}
                               />
                               <p className="text-xs mt-1 capitalize">{key}</p>
                             </div>
@@ -172,8 +172,8 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                           {Object.entries(guideline.typography).map(([key, font]) => (
                             <div key={key} className="p-2 bg-muted rounded">
                               <p className="text-xs text-muted-foreground capitalize">{key}</p>
-                              <p className="font-medium text-sm" style={{ fontFamily: font as string }}>
-                                {font}
+                              <p className="font-medium text-sm" style={{ fontFamily: String(font) }}>
+                                {String(font)}
                               </p>
                             </div>
                           ))}
@@ -189,7 +189,7 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                           <div className="flex gap-1 mt-2">
                             {Object.entries(guideline.spacing).slice(0, 4).map(([key, value]) => (
                               <Badge key={key} variant="outline" className="text-xs">
-                                {key}: {value}
+                                {key}: {String(value)}
                               </Badge>
                             ))}
                           </div>
@@ -202,7 +202,7 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                           <div className="flex gap-1 mt-2">
                             {Object.entries(guideline.border_radius).slice(0, 3).map(([key, value]) => (
                               <Badge key={key} variant="outline" className="text-xs">
-                                {key}: {value}
+                                {key}: {String(value)}
                               </Badge>
                             ))}
                           </div>
@@ -273,10 +273,10 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                       <div className="flex items-center gap-2">
                         <Label className="text-xs text-muted-foreground">Participants:</Label>
                         <div className="flex -space-x-2">
-                          {session.participants.slice(0, 5).map((participant: any, index: number) => (
+                          {(session.participants as Record<string, unknown>[]).slice(0, 5).map((participant, index: number) => (
                             <Avatar key={index} className="w-8 h-8 border-2 border-background">
                               <AvatarFallback className="text-xs">
-                                {participant.user_name?.charAt(0) || 'U'}
+                                {String(participant.user_name || 'U').charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                           ))}
@@ -292,12 +292,12 @@ export function UXCollaborationSuite({ formId }: UXCollaborationSuiteProps) {
                       {session.change_history && session.change_history.length > 0 && (
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Recent Changes:</Label>
-                          {session.change_history.slice(0, 2).map((change: any, index: number) => (
+                          {(session.change_history as Record<string, unknown>[]).slice(0, 2).map((change, index: number) => (
                             <div key={index} className="flex items-center gap-2 text-xs p-2 bg-muted rounded">
                               <Clock className="h-3 w-3" />
-                              <span>{change.user} {change.action}</span>
+                              <span>{String(change.user || '')} {String(change.action || '')}</span>
                               <Badge variant="outline" className="text-xs ml-auto">
-                                {new Date(change.timestamp).toLocaleTimeString()}
+                                {new Date(String(change.timestamp || '')).toLocaleTimeString()}
                               </Badge>
                             </div>
                           ))}

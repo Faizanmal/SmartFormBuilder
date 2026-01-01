@@ -2,7 +2,7 @@
 Performance monitoring and optimization service
 """
 from django.db.models import Avg, Count, Min, Max, F
-from django.db.models.functions import TruncDate, Coalesce
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
 import logging

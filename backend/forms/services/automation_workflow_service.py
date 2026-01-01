@@ -11,11 +11,11 @@ Features:
 """
 import json
 import operator
-from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional
+from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Q, F, Count, Avg
+from django.db.models import F
 from django.core.mail import send_mail
 import logging
 
@@ -47,9 +47,7 @@ class SmartRoutingService:
             Routing decision with assigned team members
         """
         from forms.models_automation import (
-            SmartRoutingConfig, 
-            RoutingAssignment,
-            TeamMemberCapacity,
+            SmartRoutingConfig,
         )
         
         try:
@@ -89,7 +87,7 @@ class SmartRoutingService:
     
     def _route_round_robin(self, config, submission) -> Optional['RoutingAssignment']:
         """Route using round-robin strategy"""
-        from forms.models_automation import RoutingAssignment, TeamMemberCapacity
+        from forms.models_automation import RoutingAssignment
         from forms.models_advanced import TeamMember
         
         # Get team members for this form
@@ -1117,7 +1115,6 @@ class FollowUpService:
     def _schedule_next_message(self, enrollment):
         """Schedule the next message in the sequence"""
         from forms.models_automation import SequenceMessage
-        from django_celery_beat.models import PeriodicTask, ClockedSchedule
         
         sequence = enrollment.sequence
         current_step = enrollment.current_step

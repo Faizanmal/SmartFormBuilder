@@ -2,9 +2,7 @@
 Accessibility testing and compliance service
 """
 from django.utils import timezone
-from datetime import timedelta
 import logging
-import re
 
 from forms.models_accessibility import (
     AccessibilityConfig, AccessibilityAudit, AccessibilityIssue,
@@ -156,7 +154,7 @@ class AccessibilityService:
                     description=f'Field "{field_id}" is missing a label',
                     help_text='All form fields must have descriptive labels',
                     field_id=field_id,
-                    fix_suggestion=f'Add a descriptive label to the field',
+                    fix_suggestion='Add a descriptive label to the field',
                     auto_fixable=False,
                 )
                 issues.append(issue)

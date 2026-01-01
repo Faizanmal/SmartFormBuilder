@@ -3,14 +3,10 @@ Service for submission bulk actions and batch processing
 """
 import logging
 from django.utils import timezone
-from django.db.models import Q
 from typing import List, Dict, Any
-import csv
-import io
-from datetime import timedelta
 
 from forms.models_new_features import BulkAction, BatchProcessingQueue
-from forms.models import Submission, Form
+from forms.models import Submission
 from forms.tasks import process_bulk_action_async
 
 logger = logging.getLogger(__name__)

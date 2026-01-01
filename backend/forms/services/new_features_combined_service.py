@@ -9,8 +9,7 @@ Combined services for remaining new features:
 """
 import logging
 from django.utils import timezone
-from typing import Dict, Any, List
-import json
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 

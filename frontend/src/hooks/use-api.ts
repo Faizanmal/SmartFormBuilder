@@ -1,8 +1,8 @@
 // Stub file for missing hooks
 export const useTags = () => ({ data: [], isLoading: false });
 export const useCreateTag = () => ({ 
-  mutate: (_args?: any) => {}, 
-  mutateAsync: async (_args?: any) => {},
+  mutate: (_args?: unknown) => {}, 
+  mutateAsync: async (_args?: unknown) => {},
   isLoading: false,
   isPending: false
 });

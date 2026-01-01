@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { i18nAPI } from '@/lib/advancedFeaturesAPI';
 import { Language, FormTranslation } from '@/types/advancedFeatures';
 
@@ -16,11 +16,6 @@ export default function LanguageSelector({ formId, currentLanguage, onLanguageCh
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
-  useEffect(() => {
-    loadLanguages();
-    loadTranslations();
-  }, [formId]);
-
   const loadLanguages = async () => {
     try {
       const data = await i18nAPI.getLanguages();
@@ -32,14 +27,19 @@ export default function LanguageSelector({ formId, currentLanguage, onLanguageCh
     }
   };
 
-  const loadTranslations = async () => {
+  const loadTranslations = useCallback(async () => {
     try {
       const data = await i18nAPI.getFormTranslations(formId);
       setTranslations(data);
     } catch (error) {
       console.error('Failed to load translations:', error);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    loadLanguages();
+    loadTranslations();
+  }, [loadTranslations]);
 
   const handleAutoTranslate = async (targetLang: string) => {
     setTranslating(true);

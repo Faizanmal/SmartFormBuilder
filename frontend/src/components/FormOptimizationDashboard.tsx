@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,12 +54,7 @@ export function FormOptimizationDashboard({ formId, onApplySuggestion }: FormOpt
   const [generating, setGenerating] = useState(false);
   const [autoOptimizing, setAutoOptimizing] = useState(false);
 
-  useEffect(() => {
-    fetchAnalysis();
-    fetchSuggestions();
-  }, [formId]);
-
-  const fetchAnalysis = async () => {
+  const fetchAnalysis = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/automation/forms/${formId}/optimization/analyze/`);
       const data = await response.json();
@@ -69,9 +64,9 @@ export function FormOptimizationDashboard({ formId, onApplySuggestion }: FormOpt
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
 
-  const fetchSuggestions = async () => {
+  const fetchSuggestions = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/automation/forms/${formId}/optimization/suggestions/`);
       const data = await response.json();
@@ -79,7 +74,12 @@ export function FormOptimizationDashboard({ formId, onApplySuggestion }: FormOpt
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    fetchAnalysis();
+    fetchSuggestions();
+  }, [fetchAnalysis, fetchSuggestions]);
 
   const generateSuggestions = async () => {
     setGenerating(true);

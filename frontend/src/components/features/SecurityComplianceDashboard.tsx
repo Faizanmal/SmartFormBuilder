@@ -318,11 +318,14 @@ export function SecurityComplianceDashboard({ formId }: SecurityComplianceDashbo
                   {latestScan.recommendations.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">Recommendations</h4>
-                      {latestScan.recommendations.slice(0, 3).map((rec: any, index: number) => (
-                        <div key={index} className="text-sm p-2 bg-muted rounded">
-                          {rec.description || rec}
-                        </div>
-                      ))}
+                      {latestScan.recommendations.slice(0, 3).map((rec: unknown, index: number) => {
+                        const desc = typeof rec === 'string' ? rec : String((rec as Record<string, unknown>).description || '');
+                        return (
+                          <div key={index} className="text-sm p-2 bg-muted rounded">
+                            {desc}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -69,20 +69,14 @@ export function AccessibilitySettings() {
   };
 
   useEffect(() => {
-    // Load preferences from localStorage
+    // Apply persisted or default preferences
     const prefs = loadPreferences();
-    setReducedMotion(prefs.reducedMotion || prefersReducedMotion());
-    setHighContrast(prefs.highContrast || prefersHighContrast());
-    setFontSize(prefs.fontSize || 16);
-    setKeyboardNav(prefs.keyboardNav !== false);
-    setFocusIndicator(prefs.focusIndicator !== false);
-
-    // Apply settings
     applyAccessibilitySettings(prefs);
 
     // Listen for system preference changes
     const cleanup = setupReducedMotionListener((reduced) => {
-      if (!prefs.reducedMotion) { // Only if not manually set
+      const currentPrefs = loadPreferences();
+      if (!currentPrefs.reducedMotion) { // Only if not manually set
         setReducedMotion(reduced);
         applyMotionPreference(reduced);
       }

@@ -292,7 +292,7 @@ export function MobilePWAController({ formId }: MobilePWAControllerProps) {
                     <div className="space-y-2">
                       <Label>Allowed Zones</Label>
                       <div className="space-y-2">
-                        {geolocation.allowed_zones.map((zone: any, index: number) => (
+                        {(geolocation.allowed_zones as unknown as { name: string; latitude: number; longitude: number; radius: number }[]).map((zone, index: number) => (
                           <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                             <div>
                               <p className="font-medium text-sm">{zone.name}</p>

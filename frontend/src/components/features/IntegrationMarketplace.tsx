@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { integrationAPI } from '@/lib/advancedFeaturesAPI';
 import { IntegrationProvider, IntegrationConnection, IntegrationWorkflow } from '@/types/advancedFeatures';
 
@@ -16,11 +16,7 @@ export default function IntegrationMarketplace({ formId }: IntegrationMarketplac
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  useEffect(() => {
-    loadData();
-  }, [selectedCategory]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [providersData, connectionsData, workflowsData] = await Promise.all([
@@ -36,7 +32,11 @@ export default function IntegrationMarketplace({ formId }: IntegrationMarketplac
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, formId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleConnect = async (provider: IntegrationProvider) => {
     const name = prompt(`Connect to ${provider.name}.\nEnter a name for this connection:`);
@@ -99,7 +99,7 @@ export default function IntegrationMarketplace({ formId }: IntegrationMarketplac
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => setActiveTab(tab.key as 'browse' | 'connections' | 'workflows')}
               className={`px-4 py-3 font-medium border-b-2 transition ${
                 activeTab === tab.key
                   ? 'border-blue-600 text-blue-600'

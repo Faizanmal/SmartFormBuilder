@@ -64,7 +64,7 @@ interface FormBuilderProps {
     fields: Field[];
     logic?: unknown[];
   };
-  onSave?: (schema: any) => void;
+  onSave?: (schema: Record<string, unknown>) => void;
 }
 
 export function FormBuilder({ initialSchema, onSave }: FormBuilderProps) {

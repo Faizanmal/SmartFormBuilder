@@ -322,13 +322,13 @@ export function AutomationIntegrationHub({ formId }: AutomationIntegrationHubPro
                   {routing.routing_rules.length > 0 && (
                     <div className="space-y-2">
                       <Label>Routing Rules</Label>
-                      {routing.routing_rules.map((rule: any, index: number) => (
+                      {(routing.routing_rules as Record<string, unknown>[]).map((rule, index: number) => (
                         <div key={index} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                           <ArrowRight className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm flex-1">
-                            {rule.condition || `Rule ${index + 1}`} → {rule.destination}
+                            {String(rule.condition || `Rule ${index + 1}`)} → {String(rule.destination || '')}
                           </span>
-                          <Badge variant="secondary">{rule.priority}</Badge>
+                          <Badge variant="secondary">{String(rule.priority || '')}</Badge>
                         </div>
                       ))}
                     </div>
@@ -379,12 +379,12 @@ export function AutomationIntegrationHub({ formId }: AutomationIntegrationHubPro
 
                     {engine.rules.length > 0 && (
                       <div className="space-y-1 text-xs">
-                        {engine.rules.slice(0, 2).map((rule: any, index: number) => (
+                        {engine.rules.slice(0, 2).map((rule: Record<string, unknown>, index: number) => (
                           <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
                             <Play className="h-3 w-3" />
-                            <code className="flex-1">{rule.condition}</code>
+                            <code className="flex-1">{String(rule.condition || '')}</code>
                             <ArrowRight className="h-3 w-3" />
-                            <span>{rule.action}</span>
+                            <span>{String(rule.action || '')}</span>
                           </div>
                         ))}
                       </div>
@@ -431,12 +431,12 @@ export function AutomationIntegrationHub({ formId }: AutomationIntegrationHubPro
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {workflow.steps.map((step: any, index: number) => (
+                      {workflow.steps.map((step: Record<string, unknown>, index: number) => (
                         <React.Fragment key={index}>
                           <div className="flex-1 p-2 bg-muted rounded text-xs">
-                            <p className="font-medium">{step.name}</p>
+                            <p className="font-medium">{String(step.name || '')}</p>
                             <p className="text-muted-foreground">
-                              {step.approvers?.length || 0} approvers
+                              {Array.isArray(step.approvers) ? (step.approvers as unknown[]).length : 0} approvers
                             </p>
                           </div>
                           {index < workflow.steps.length - 1 && (

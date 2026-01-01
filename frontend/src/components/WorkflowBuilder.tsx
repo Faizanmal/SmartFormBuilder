@@ -91,11 +91,7 @@ export function WorkflowBuilder({ formId }: WorkflowBuilderProps) {
     actions: [] as WorkflowAction[],
   });
 
-  useEffect(() => {
-    fetchWorkflows();
-  }, [formId]);
-
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/automation/workflows/?form_id=${formId}`);
       const data = await response.json();
@@ -105,7 +101,11 @@ export function WorkflowBuilder({ formId }: WorkflowBuilderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    fetchWorkflows();
+  }, [fetchWorkflows]);
 
   const createWorkflow = async () => {
     try {
