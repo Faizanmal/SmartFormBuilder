@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collaborationAPI } from '@/lib/advancedFeaturesAPI';
 import { FormCollaborator, FormEditSession, FormComment } from '@/types/advancedFeatures';
 
@@ -15,13 +15,7 @@ export default function CollaborationPanel({ formId }: CollaborationPanelProps) 
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadActiveSessions, 5000); // Poll every 5s
-    return () => clearInterval(interval);
-  }, [formId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [collaboratorsData, sessionsData, commentsData] = await Promise.all([
@@ -37,16 +31,22 @@ export default function CollaborationPanel({ formId }: CollaborationPanelProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
 
-  const loadActiveSessions = async () => {
+  const loadActiveSessions = useCallback(async () => {
     try {
       const sessionsData = await collaborationAPI.getActiveSessions(formId);
       setActiveSessions(sessionsData);
     } catch (error) {
       console.error('Failed to load active sessions:', error);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadActiveSessions, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, [loadData, loadActiveSessions]);
 
   const handleInviteCollaborator = async () => {
     const email = prompt('Enter collaborator email:');
@@ -59,7 +59,7 @@ export default function CollaborationPanel({ formId }: CollaborationPanelProps) 
       await collaborationAPI.inviteCollaborator({
         form: formId,
         user: email, // This should be user ID in production
-        role: role as any,
+        role: role as 'viewer' | 'editor' | 'admin',
         permissions: [],
       });
       await loadData();

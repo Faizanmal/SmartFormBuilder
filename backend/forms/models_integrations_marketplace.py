@@ -78,7 +78,7 @@ class IntegrationConnection(models.Model):
 class IntegrationWorkflow(models.Model):
     """Zapier-style automation workflows"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='workflows')
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='integration_workflows')
     form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='workflows', null=True, blank=True)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)

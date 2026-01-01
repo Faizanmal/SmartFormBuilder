@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formsApi } from "@/lib/api-client";
 import useAuth from "@/hooks/useAuth";
@@ -38,11 +38,24 @@ export default function FormBuilderPage() {
   const [selectedFieldIndex, setSelectedFieldIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("builder");
 
+  const loadForm = useCallback(async () => {
+    try {
+      const data = await formsApi.get(formId);
+      setForm(data);
+      setSchema(data.schema_json);
+    } catch (error) {
+      toast.error("Failed to load form");
+      router.push("/dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }, [formId, router]);
+
   useEffect(() => {
     if (isAuthenticated) {
       loadForm();
     }
-  }, [formId, isAuthenticated]);
+  }, [formId, isAuthenticated, loadForm]);
 
   if (authLoading || !isAuthenticated) {
     return (
@@ -54,19 +67,6 @@ export default function FormBuilderPage() {
       </div>
     );
   }
-
-  const loadForm = async () => {
-    try {
-      const data = await formsApi.get(formId);
-      setForm(data);
-      setSchema(data.schema_json);
-    } catch (error) {
-      toast.error("Failed to load form");
-      router.push("/dashboard");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!schema.title.trim()) {
@@ -119,7 +119,7 @@ export default function FormBuilderPage() {
   const addField = (type: string) => {
     const newField: FormField = {
       id: `field_${Date.now()}`,
-      type: type as any,
+      type: type as FormField['type'],
       label: `New ${type} field`,
       required: false,
     };

@@ -5,13 +5,11 @@ import requests
 import logging
 from django.core.cache import cache
 from django.utils import timezone
-from datetime import timedelta
 from typing import Dict, Any, List, Optional
-import json
 import re
 
 from forms.models_new_features import (
-    FieldDependency, ExternalAPIProvider, FieldAutoPopulationLog
+    FieldDependency, FieldAutoPopulationLog
 )
 
 logger = logging.getLogger(__name__)

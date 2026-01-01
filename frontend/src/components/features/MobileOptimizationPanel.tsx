@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { mobileAPI } from '@/lib/advancedFeaturesAPI';
 import { MobileOptimization, OfflineSubmission } from '@/types/advancedFeatures';
 
@@ -14,11 +14,7 @@ export default function MobileOptimizationPanel({ formId }: MobileOptimizationPa
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [formId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [optimizationData, offlineData] = await Promise.all([
@@ -32,7 +28,11 @@ export default function MobileOptimizationPanel({ formId }: MobileOptimizationPa
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleToggleSetting = async (key: keyof Omit<MobileOptimization, 'id' | 'form' | 'created_at' | 'updated_at' | 'pwa_manifest'>) => {
     if (!optimization) return;

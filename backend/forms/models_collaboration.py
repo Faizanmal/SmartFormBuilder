@@ -138,7 +138,7 @@ class FormComment(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='resolved_comments'
+        related_name='resolved_form_comments'
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

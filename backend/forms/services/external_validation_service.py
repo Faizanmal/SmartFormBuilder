@@ -250,7 +250,7 @@ class ExternalValidationService:
                     'has_mx_records': has_mx
                 }
             }
-        except Exception as e:
+        except Exception:
             return {
                 'is_valid': False,
                 'success': True,

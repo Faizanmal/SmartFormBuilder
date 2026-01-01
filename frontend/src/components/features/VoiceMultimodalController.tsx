@@ -132,7 +132,7 @@ export function VoiceMultimodalController({ formId }: VoiceMultimodalControllerP
                       onValueChange={(value) => {
                         updateVoiceConfig.mutate({
                           formId,
-                          config: { transcription_engine: value as any }
+                          config: { transcription_engine: String(value) as 'whisper' | 'google' | 'azure' | 'aws' }
                         });
                       }}
                     >

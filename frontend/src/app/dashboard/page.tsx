@@ -103,9 +103,9 @@ export default function DashboardPage() {
 
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold">My Forms</h1>
+          <h1 className="text-4xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Create and manage your smart forms
+            Welcome back! Here's an overview of your forms and activity.
           </p>
         </div>
         <Button onClick={handleCreateForm} size="lg">
@@ -114,121 +114,217 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {forms.length === 0 ? (
-        <Card className="text-center py-12">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
           <CardContent>
-            <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No forms yet</h3>
-            <p className="text-muted-foreground mb-6">
-              Get started by creating your first form. Just describe what you need and AI will generate it for you.
+            <div className="text-2xl font-bold">{forms.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {forms.filter(f => f.published_at).length} published
             </p>
-            <Button onClick={handleCreateForm}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Your First Form
-            </Button>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {forms.map((form) => (
-            <Card key={form.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="line-clamp-1">{form.title}</CardTitle>
-                    <CardDescription className="line-clamp-2 mt-1">
-                      {form.description || "No description"}
-                    </CardDescription>
-                  </div>
-                  <Badge variant={form.published_at ? "default" : "secondary"}>
-                    {form.published_at ? "Published" : "Draft"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold">{form.views_count}</div>
-                      <div className="text-xs text-muted-foreground">Views</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{form.submissions_count}</div>
-                      <div className="text-xs text-muted-foreground">Submissions</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{form.conversion_rate}%</div>
-                      <div className="text-xs text-muted-foreground">Conversion</div>
-                    </div>
-                  </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {forms.reduce((sum, form) => sum + (form.views_count || 0), 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Across all forms
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Submissions</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {forms.reduce((sum, form) => sum + (form.submissions_count || 0), 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Form responses
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Conversion</CardTitle>
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {forms.length > 0
+                ? Math.round(forms.reduce((sum, form) => sum + (form.conversion_rate || 0), 0) / forms.length)
+                : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Conversion rate
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleEditForm(form.id)}
-                    >
-                      <Settings className="mr-1 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewAnalytics(form.id)}
-                    >
-                      <BarChart3 className="mr-1 h-4 w-4" />
-                      Analytics
-                    </Button>
+      {/* Recent Forms Section */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Recent Forms</h2>
+        {forms.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No forms yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Get started by creating your first form. Just describe what you need and AI will generate it for you.
+              </p>
+              <Button onClick={handleCreateForm}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Your First Form
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {forms.slice(0, 6).map((form) => (
+              <Card key={form.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="line-clamp-1">{form.title}</CardTitle>
+                      <CardDescription className="line-clamp-2 mt-1">
+                        {form.description || "No description"}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={form.published_at ? "default" : "secondary"}>
+                      {form.published_at ? "Published" : "Draft"}
+                    </Badge>
                   </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold">{form.views_count}</div>
+                        <div className="text-xs text-muted-foreground">Views</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{form.submissions_count}</div>
+                        <div className="text-xs text-muted-foreground">Submissions</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{form.conversion_rate}%</div>
+                        <div className="text-xs text-muted-foreground">Conversion</div>
+                      </div>
+                    </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewEmbed(form.id)}
-                    >
-                      Embed
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewIntegrations(form.id)}
-                    >
-                      Integrations
-                    </Button>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewForm(form.slug)}
-                    >
-                      <ExternalLink className="mr-1 h-4 w-4" />
-                      View Form
-                    </Button>
-                  </div>
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleEditForm(form.id)}
+                      >
+                        <Settings className="mr-1 h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewAnalytics(form.id)}
+                      >
+                        <BarChart3 className="mr-1 h-4 w-4" />
+                        Analytics
+                      </Button>
+                    </div>
 
-                  {/* Metadata */}
-                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                    <div>Slug: <code className="bg-muted px-1 rounded">{form.slug}</code></div>
-                    <div className="mt-1">
-                      Created: {new Date(form.created_at).toLocaleDateString()}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewEmbed(form.id)}
+                      >
+                        Embed
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewIntegrations(form.id)}
+                      >
+                        Integrations
+                      </Button>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewForm(form.slug)}
+                      >
+                        <ExternalLink className="mr-1 h-4 w-4" />
+                        View Form
+                      </Button>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                      <div>Slug: <code className="bg-muted px-1 rounded">{form.slug}</code></div>
+                      <div className="mt-1">
+                        Created: {new Date(form.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+        {forms.length > 6 && (
+          <div className="text-center mt-6">
+            <Button variant="outline" onClick={() => router.push('/forms')}>
+              View All Forms ({forms.length})
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleCreateForm}>
+          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+            <PlusCircle className="h-8 w-8 text-primary mb-2" />
+            <h3 className="font-semibold">Create Form</h3>
+            <p className="text-sm text-muted-foreground">Build a new form with AI</p>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/templates')}>
+          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+            <FileText className="h-8 w-8 text-primary mb-2" />
+            <h3 className="font-semibold">Templates</h3>
+            <p className="text-sm text-muted-foreground">Use pre-built templates</p>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/forms')}>
+          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+            <BarChart3 className="h-8 w-8 text-primary mb-2" />
+            <h3 className="font-semibold">All Forms</h3>
+            <p className="text-sm text-muted-foreground">Manage all your forms</p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

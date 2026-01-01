@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ interface Message {
 
 interface ConversationalFormProps {
   formId: string;
-  onComplete?: (data: any) => void;
+  onComplete?: (data: unknown) => void;
   enableVoice?: boolean;
   className?: string;
 }
@@ -40,43 +40,65 @@ export function ConversationalForm({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    startConversation();
-  }, [formId]);
+  const speakText = useCallback(async (text: string) => {
+    if (!enableVoice || isSpeaking) return;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const startConversation = async () => {
-    setIsLoading(true);
+    setIsSpeaking(true);
     try {
-      const response = await fetch('/api/advanced/conversational/start_conversation/', {
+      const response = await fetch('/api/advanced/conversational/text_to_speech/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form_id: formId }),
+        body: JSON.stringify({ text, voice: 'nova' }),
       });
 
       const data = await response.json();
-      setSessionToken(data.session_token);
-
-      // Add bot's first question
-      addMessage('bot', data.question.question);
       
-      // Speak if voice enabled
-      if (enableVoice) {
-        speakText(data.question.question);
+      if (data.audio_data) {
+        const audio = new Audio(data.audio_data);
+        audio.onended = () => setIsSpeaking(false);
+        await audio.play();
+      } else {
+        setIsSpeaking(false);
       }
     } catch (error) {
-      console.error('Failed to start conversation:', error);
-      addMessage('bot', 'Sorry, there was an error starting the form. Please try again.');
-    } finally {
-      setIsLoading(false);
+      console.error('Text-to-speech failed:', error);
+      setIsSpeaking(false);
     }
+  }, [enableVoice, isSpeaking]);
+
+  useEffect(() => {
+    const startConversation = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/advanced/conversational/start_conversation/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ form_id: formId }),
+        });
+
+        const data = await response.json();
+        setSessionToken(data.session_token);
+
+        // Add bot's first question
+        addMessage('bot', data.question.question);
+        
+        // Speak if voice enabled
+        if (enableVoice) {
+          speakText(data.question.question);
+        }
+      } catch (error) {
+        console.error('Failed to start conversation:', error);
+        addMessage('bot', 'Sorry, there was an error starting the form. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    startConversation();
+  }, [formId, enableVoice, speakText]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const addMessage = (type: 'bot' | 'user', content: string) => {
@@ -228,32 +250,6 @@ export function ConversationalForm({
       addMessage('bot', 'Sorry, I couldn\'t understand that. Please try typing or speaking again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const speakText = async (text: string) => {
-    if (!enableVoice || isSpeaking) return;
-
-    setIsSpeaking(true);
-    try {
-      const response = await fetch('/api/advanced/conversational/text_to_speech/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: 'nova' }),
-      });
-
-      const data = await response.json();
-      
-      if (data.audio_data) {
-        const audio = new Audio(data.audio_data);
-        audio.onended = () => setIsSpeaking(false);
-        await audio.play();
-      } else {
-        setIsSpeaking(false);
-      }
-    } catch (error) {
-      console.error('Text-to-speech failed:', error);
-      setIsSpeaking(false);
     }
   };
 

@@ -61,16 +61,20 @@ class FormViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def publish(self, request, pk=None):
         """Publish a form"""
+        from django.db import transaction
+        
         form = self.get_object()
         
-        # Create version snapshot before publishing
-        if form.status == 'draft':
-            form.create_version()
+        with transaction.atomic():
+            # Create version snapshot before publishing
+            if form.status == 'draft':
+                form.create_version()
+            
+            form.published_at = timezone.now()
+            form.is_active = True
+            form.status = 'published'
+            form.save()
         
-        form.published_at = timezone.now()
-        form.is_active = True
-        form.status = 'published'
-        form.save()
         return Response({'status': 'published', 'published_at': form.published_at, 'version': form.version})
     
     @action(detail=True, methods=['get'])
@@ -84,6 +88,8 @@ class FormViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def revert(self, request, pk=None):
         """Revert form to a specific version"""
+        from django.db import transaction
+        
         form = self.get_object()
         version_id = request.data.get('version_id')
         
@@ -92,13 +98,14 @@ class FormViewSet(viewsets.ModelViewSet):
         
         version = get_object_or_404(FormVersion, id=version_id, form=form)
         
-        # Save current state as new version before reverting
-        form.create_version()
-        
-        # Revert to selected version
-        form.schema_json = version.schema_json
-        form.settings_json = version.settings_json
-        form.save()
+        with transaction.atomic():
+            # Save current state as new version before reverting
+            form.create_version()
+            
+            # Revert to selected version
+            form.schema_json = version.schema_json
+            form.settings_json = version.settings_json
+            form.save()
         
         return Response({'status': 'reverted', 'version': form.version})
         form = self.get_object()

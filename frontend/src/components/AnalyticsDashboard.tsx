@@ -3,7 +3,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,16 +17,46 @@ interface AnalyticsDashboardProps {
 
 const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#fa709a'];
 
+interface AnalyticsData {
+  funnel: {
+    views: number;
+    starts: number;
+    submits: number;
+    view_to_start_rate: number;
+    start_to_submit_rate: number;
+    overall_conversion: number;
+    drop_off_at_start: number;
+    drop_off_after_start: number;
+  };
+  time_series: {
+    submissions: Array<{ date: string; count: number }>;
+  };
+  heat_map: Array<{
+    field_id: string;
+    field_label: string;
+    engagement_score: number;
+    error_rate: number;
+    intensity: number;
+  }>;
+  devices: Array<{
+    device_type: string;
+    percentage?: number;
+  }>;
+  geography: {
+    top_countries: Array<{
+      country: string;
+      count: number;
+    }>;
+  };
+  field_analytics: unknown[]; // Add this
+}
+
 export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
   const [dateRange, setDateRange] = useState('30');
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [formId, dateRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const daysAgo = new Date();
@@ -50,7 +80,11 @@ export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId, dateRange]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading analytics...</div>;
@@ -200,7 +234,7 @@ export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {heat_map.slice(0, 10).map((field: any) => (
+                {heat_map.slice(0, 10).map((field: { field_id: string; field_label: string; engagement_score: number; error_rate: number; intensity: number; }) => (
                   <div key={field.field_id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <p className="font-medium">{field.field_label}</p>
@@ -241,7 +275,7 @@ export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
                     outerRadius={100}
                     label={(entry) => `${entry.device_type} (${entry.percentage}%)`}
                   >
-                    {devices.map((entry: any, index: number) => (
+                    {devices.map((entry: { device_type: string; percentage?: number }, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -259,7 +293,7 @@ export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {geography.top_countries.map((country: any) => (
+                {geography.top_countries.map((country: { country: string; count: number }) => (
                   <div key={country.country} className="flex items-center justify-between p-2">
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-gray-500" />
@@ -277,7 +311,14 @@ export function AnalyticsDashboard({ formId }: AnalyticsDashboardProps) {
   );
 }
 
-function MetricCard({ title, value, icon, trend }: any) {
+interface MetricCardProps {
+  title: string;
+  value: string | number | null | undefined;
+  icon: React.ReactNode;
+  trend?: string | null;
+}
+
+function MetricCard({ title, value, icon, trend }: MetricCardProps) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -299,7 +340,15 @@ function MetricCard({ title, value, icon, trend }: any) {
   );
 }
 
-function FunnelStep({ label, count, percentage, color, dropOff }: any) {
+interface FunnelStepProps {
+  label: string;
+  count: number;
+  percentage: number;
+  color: string;
+  dropOff?: number;
+}
+
+function FunnelStep({ label, count, percentage, color, dropOff }: FunnelStepProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">

@@ -66,16 +66,28 @@ class Form(models.Model):
             return 0
         return round((self.completion_count / self.submissions_count) * 100, 2)
     
+    def get_next_version_number(self):
+        """Get the next version number for this form"""
+        existing_versions = self.versions.values_list('version', flat=True)
+        return max(existing_versions) + 1 if existing_versions else 1
+
     def create_version(self):
         """Create a new version of the form"""
-        FormVersion.objects.create(
-            form=self,
-            version=self.version,
-            schema_json=self.schema_json,
-            settings_json=self.settings_json
-        )
-        self.version += 1
-        self.save(update_fields=['version'])
+        from django.db import transaction
+
+        with transaction.atomic():
+            next_version = self.get_next_version_number()
+
+            FormVersion.objects.create(
+                form=self,
+                version=next_version,
+                schema_json=self.schema_json,
+                settings_json=self.settings_json
+            )
+
+            # Update the form's version field
+            self.version = next_version + 1
+            self.save(update_fields=['version'])
 
 
 class Submission(models.Model):

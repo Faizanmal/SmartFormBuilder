@@ -88,6 +88,7 @@ class AILayoutSuggestion(models.Model):
 class ConversationalAIConfig(models.Model):
     """Configuration for AI chatbot integration (Claude, Gemini, OpenAI)"""
     AI_PROVIDERS = [
+        ('groq', 'Groq'),
         ('openai', 'OpenAI GPT-4'),
         ('anthropic', 'Anthropic Claude'),
         ('google', 'Google Gemini'),

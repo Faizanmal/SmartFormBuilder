@@ -18,7 +18,7 @@ export function PWAPrompt() {
     });
 
     // Check if installable
-    let deferredPrompt: any;
+    let deferredPrompt: Event | null = null;
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt = e;

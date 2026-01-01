@@ -101,7 +101,18 @@ export function MobileInteractions({ formId }: MobileInteractionsProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const recognitionRef = useRef<any>(null);
+  type SpeechRecognitionLike = {
+    continuous?: boolean;
+    interimResults?: boolean;
+    lang?: string;
+    onresult?: (e: unknown) => void;
+    onerror?: (e: unknown) => void;
+    onend?: () => void;
+    start: () => void;
+    stop: () => void;
+  };
+
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -172,20 +183,26 @@ export function MobileInteractions({ formId }: MobileInteractionsProps) {
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+    const RecognitionCtor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!RecognitionCtor) {
+      alert('Voice input is not supported in this browser');
+      return;
+    }
+    const recognition = new RecognitionCtor();
     
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = voiceState.language;
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: unknown) => {
+      const ev = event as { resultIndex: number; results: Array<Array<{ transcript: string; confidence: number }>> };
       let transcript = '';
       let confidence = 0;
       
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-        confidence = event.results[i][0].confidence;
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        transcript += ev.results[i][0].transcript;
+        confidence = ev.results[i][0].confidence;
       }
       
       setVoiceState(prev => ({
@@ -195,10 +212,11 @@ export function MobileInteractions({ formId }: MobileInteractionsProps) {
       }));
     };
 
-    recognition.onerror = (event: any) => {
-      console.error('Voice recognition error:', event.error);
+    recognition.onerror = (event: unknown) => {
+      const e = event as { error?: string };
+      console.error('Voice recognition error:', e.error);
       setVoiceState(prev => ({ ...prev, isListening: false }));
-    };
+    }; 
 
     recognition.onend = () => {
       setVoiceState(prev => ({ ...prev, isListening: false }));

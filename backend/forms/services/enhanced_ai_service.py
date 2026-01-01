@@ -9,9 +9,7 @@ Features:
 - Conversational AI chatbots
 """
 import json
-import hashlib
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils import timezone
 
@@ -194,7 +192,7 @@ class LayoutOptimizationService:
                 suggestions.append({
                     'suggestion_type': 'field_visibility',
                     'priority': 'critical' if drop_rate > 0.4 else 'high',
-                    'title': f'High drop-off detected on field',
+                    'title': 'High drop-off detected on field',
                     'description': f'Field {field_id} has a {drop_rate*100:.1f}% drop-off rate',
                     'rationale': 'Consider simplifying this field, making it optional, or providing better help text.',
                     'field_ids': [field_id],
@@ -391,7 +389,7 @@ class ConversationalFormService:
         input_method: str = 'text',
     ) -> Dict[str, Any]:
         """Process user message and generate response"""
-        from forms.models_emerging_tech import ConversationSession, ConversationMessage
+        from forms.models_emerging_tech import ConversationSession
         
         try:
             session = ConversationSession.objects.get(session_id=session_id, status='active')
@@ -578,7 +576,7 @@ class ConversationalFormService:
                 # Return original case option
                 idx = options.index(message.lower())
                 return {'valid': True, 'value': field.get('options', [])[idx]}
-            return {'valid': False, 'error': f'Please choose from the available options.'}
+            return {'valid': False, 'error': 'Please choose from the available options.'}
         
         elif field_type == 'checkbox':
             affirmative = ['yes', 'true', 'yeah', 'yep', 'sure', 'ok', 'okay', '1']

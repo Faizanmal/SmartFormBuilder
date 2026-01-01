@@ -12,7 +12,6 @@ Features:
 import uuid
 from django.db import models
 from django.conf import settings
-from django.contrib.auth import get_user_model
 
 
 class ThemeMarketplace(models.Model):
@@ -743,7 +742,7 @@ class EnhancedFormComment(models.Model):
     # Mentions
     mentions = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name='mentioned_in_comments',
+        related_name='mentioned_in_enhanced_comments',
         blank=True
     )
     
@@ -754,7 +753,7 @@ class EnhancedFormComment(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='resolved_comments'
+        related_name='resolved_enhanced_comments'
     )
     resolved_at = models.DateTimeField(null=True)
     

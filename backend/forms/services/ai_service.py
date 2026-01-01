@@ -83,12 +83,25 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
     ]
     
     def __init__(self):
+        self.groq_available = False
         self.openai_available = False
-        api_key = getattr(settings, 'OPENAI_API_KEY', None)
-        if api_key and api_key != 'your-openai-api-key' and len(api_key) > 20:
+        
+        # Initialize Groq client
+        groq_api_key = getattr(settings, 'GROQ_API_KEY', None)
+        if groq_api_key and groq_api_key != 'your-groq-api-key' and len(groq_api_key) > 20:
+            try:
+                from groq import Groq
+                self.groq_client = Groq(api_key=groq_api_key)
+                self.groq_available = True
+            except Exception:
+                self.groq_available = False
+        
+        # Initialize OpenAI client as fallback
+        openai_api_key = getattr(settings, 'OPENAI_API_KEY', None)
+        if openai_api_key and openai_api_key != 'your-openai-api-key' and len(openai_api_key) > 20:
             try:
                 from openai import OpenAI
-                self.client = OpenAI(api_key=api_key)
+                self.openai_client = OpenAI(api_key=openai_api_key)
                 self.openai_available = True
             except Exception:
                 self.openai_available = False
@@ -104,8 +117,8 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
         Returns:
             Dictionary containing the generated form schema
         """
-        # If OpenAI is not available, use template-based generation
-        if not self.openai_available:
+        # If no AI services are available, use template-based generation
+        if not self.groq_available and not self.openai_available:
             return self._generate_fallback_schema(prompt, context)
         
         user_message = f"Create a form for: {prompt}"
@@ -119,20 +132,44 @@ Do not include explanatory text. Generate helpful, short placeholders and id val
             {"role": "user", "content": user_message}
         ]
         
-        try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=2000,
-                response_format={"type": "json_object"}
-            )
-            
-            schema = json.loads(response.choices[0].message.content)
-            return schema
-            
-        except Exception as e:
-            raise ValueError(f"Failed to generate form schema: {str(e)}")
+        # Try Groq first
+        if self.groq_available:
+            try:
+                response = self.groq_client.chat.completions.create(
+                    model="llama3-70b-8192",
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=2000,
+                    response_format={"type": "json_object"}
+                )
+                
+                schema = json.loads(response.choices[0].message.content)
+                return schema
+                
+            except Exception as e:
+                print(f"Groq API failed: {str(e)}")
+                # Continue to OpenAI fallback
+        
+        # Try OpenAI as fallback
+        if self.openai_available:
+            try:
+                response = self.openai_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=2000,
+                    response_format={"type": "json_object"}
+                )
+                
+                schema = json.loads(response.choices[0].message.content)
+                return schema
+                
+            except Exception as e:
+                print(f"OpenAI API failed: {str(e)}")
+                # Continue to fallback
+        
+        # If both APIs failed, use template-based generation
+        return self._generate_fallback_schema(prompt, context)
     
     def _generate_fallback_schema(self, prompt: str, context: Optional[str] = None) -> Dict[str, Any]:
         """

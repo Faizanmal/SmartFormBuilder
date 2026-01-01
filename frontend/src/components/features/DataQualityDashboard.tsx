@@ -40,7 +40,7 @@ interface DataQualityRule {
   id: string;
   field_id: string;
   rule_type: string;
-  rule_config: any;
+  rule_config: Record<string, unknown>;
   severity: 'error' | 'warning' | 'info';
   error_message: string;
   is_active: boolean;
@@ -72,7 +72,7 @@ interface ExternalValidation {
   validation_type: string;
   original_value: string;
   is_valid: boolean;
-  validation_result: any;
+  validation_result: Record<string, unknown> | null;
   provider: string;
 }
 
@@ -102,9 +102,9 @@ export function DataQualityDashboard({ formId }: DataQualityDashboardProps) {
   const [testEmail, setTestEmail] = useState('');
   const [testPhone, setTestPhone] = useState('');
   const [testAddress, setTestAddress] = useState('');
-  const [emailResult, setEmailResult] = useState<any>(null);
-  const [phoneResult, setPhoneResult] = useState<any>(null);
-  const [addressResult, setAddressResult] = useState<any>(null);
+  const [emailResult, setEmailResult] = useState<Record<string, unknown> | null>(null);
+  const [phoneResult, setPhoneResult] = useState<Record<string, unknown> | null>(null);
+  const [addressResult, setAddressResult] = useState<Record<string, unknown> | null>(null);
 
   const fetchRules = useCallback(async () => {
     try {
@@ -484,9 +484,9 @@ export function DataQualityDashboard({ formId }: DataQualityDashboardProps) {
                         {emailResult.is_valid ? 'Valid Email' : 'Invalid Email'}
                       </span>
                     </div>
-                    {emailResult.details && (
-                      <p className="text-sm mt-1">{emailResult.details}</p>
-                    )}
+                    {emailResult.details ? (
+                      <p className="text-sm mt-1">{String(emailResult.details)}</p>
+                    ) : null}
                   </div>
                 )}
               </CardContent>

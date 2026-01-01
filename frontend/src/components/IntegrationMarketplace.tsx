@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -88,12 +88,7 @@ export function IntegrationMarketplace({ formId }: IntegrationMarketplaceProps) 
   const [apiKey, setApiKey] = useState('');
   const [connecting, setConnecting] = useState(false);
 
-  useEffect(() => {
-    fetchCatalog();
-    fetchConfigured();
-  }, [formId]);
-
-  const fetchCatalog = async () => {
+  const fetchCatalog = useCallback(async () => {
     try {
       const response = await fetch('/api/v1/automation/integrations/catalog/');
       const data = await response.json();
@@ -107,9 +102,9 @@ export function IntegrationMarketplace({ formId }: IntegrationMarketplaceProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchConfigured = async () => {
+  const fetchConfigured = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/automation/integrations/?form_id=${formId}`);
       const data = await response.json();
@@ -117,7 +112,12 @@ export function IntegrationMarketplace({ formId }: IntegrationMarketplaceProps) 
     } catch (error) {
       console.error('Failed to fetch configured integrations:', error);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    fetchCatalog();
+    fetchConfigured();
+  }, [fetchCatalog, fetchConfigured]);
 
   const setupIntegration = async () => {
     if (!selectedIntegration) return;

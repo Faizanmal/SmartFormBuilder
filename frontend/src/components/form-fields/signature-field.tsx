@@ -43,7 +43,7 @@ export function SignatureField({ field, value, onChange }: SignatureFieldProps) 
       };
       img.src = value;
     }
-  }, []);
+  }, [value]);
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;

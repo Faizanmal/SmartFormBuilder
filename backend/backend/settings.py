@@ -157,6 +157,9 @@ CORS_ALLOW_CREDENTIALS = True
 # OpenAI API Key
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
+# Groq API Key
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

@@ -414,7 +414,7 @@ class ExternalValidationRule(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='validation_rules')
+    form = models.ForeignKey('forms.Form', on_delete=models.CASCADE, related_name='external_validation_rules')
     field_id = models.CharField(max_length=100)
     field_label = models.CharField(max_length=255)
     
@@ -953,7 +953,7 @@ class SubmissionComment(models.Model):
     parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     
     # Mentions
-    mentioned_users = models.ManyToManyField('users.User', blank=True, related_name='mentioned_in_comments')
+    mentioned_users = models.ManyToManyField('users.User', blank=True, related_name='mentioned_in_submission_comments')
     
     # Attachments
     attachments = models.JSONField(default=list, blank=True, help_text="File attachments")

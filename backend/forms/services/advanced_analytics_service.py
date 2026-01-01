@@ -1,8 +1,7 @@
 """
 Advanced analytics, heatmaps, and session recording service
 """
-from django.db.models import Avg, Count, Sum, F, Q
-from django.db.models.functions import TruncDate, TruncHour
+from django.db.models import Avg, Sum, F
 from django.utils import timezone
 from datetime import timedelta
 import logging
@@ -11,8 +10,7 @@ from scipy import stats as scipy_stats
 
 from forms.models_analytics import (
     FormHeatmapData, SessionRecording, SessionEvent,
-    DropOffAnalysis, ABTestResult, BehaviorInsight,
-    FormFunnel, FunnelStepMetric
+    DropOffAnalysis, ABTestResult, BehaviorInsight
 )
 from forms.models import Form, ABTest, FormVariant
 

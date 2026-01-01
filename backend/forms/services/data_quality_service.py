@@ -1,19 +1,18 @@
 """
 Data quality, validation, and duplicate detection service
 """
-from django.db.models import Avg, Count
+from django.db.models import Avg
 from django.utils import timezone
 from datetime import timedelta
 import re
 import logging
-import hashlib
 from difflib import SequenceMatcher
 
 from forms.models_data_quality import (
     DataQualityScore, DuplicateDetection, ExternalValidation,
-    DataCleansingRule, DataCleansingLog, ValidationRule, ExportWithQuality
+    DataCleansingRule, DataCleansingLog, ExportWithQuality
 )
-from forms.models import Form, Submission
+from forms.models import Submission
 
 logger = logging.getLogger(__name__)
 

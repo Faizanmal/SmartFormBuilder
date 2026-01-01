@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,11 +61,7 @@ export function ComplianceScanner({ formId }: ComplianceScannerProps) {
   const [selectedTypes, setSelectedTypes] = useState(['gdpr', 'wcag']);
   const [generatingPolicy, setGeneratingPolicy] = useState(false);
 
-  useEffect(() => {
-    fetchLatestScan();
-  }, [formId]);
-
-  const fetchLatestScan = async () => {
+  const fetchLatestScan = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/automation/forms/${formId}/compliance/history/`);
       const data = await response.json();
@@ -75,7 +71,11 @@ export function ComplianceScanner({ formId }: ComplianceScannerProps) {
     } catch (error) {
       console.error('Failed to fetch scan history:', error);
     }
-  };
+  }, [formId]);
+
+  useEffect(() => {
+    fetchLatestScan();
+  }, [fetchLatestScan]);
 
   const runScan = async () => {
     setScanning(true);
@@ -359,7 +359,7 @@ function IssueCard({ issue }: { issue: ComplianceIssue }) {
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
+  const getSeverityBadge = (severity: string): 'destructive' | 'secondary' | 'outline' => {
     switch (severity) {
       case 'critical': return 'destructive';
       case 'warning': return 'secondary';
@@ -372,7 +372,7 @@ function IssueCard({ issue }: { issue: ComplianceIssue }) {
       {getSeverityIcon(issue.severity)}
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant={getSeverityBadge(issue.severity) as any}>
+          <Badge variant={getSeverityBadge(issue.severity)}>
             {issue.severity}
           </Badge>
           <Badge variant="outline">{issue.type}</Badge>

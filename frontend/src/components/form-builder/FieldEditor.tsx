@@ -106,7 +106,7 @@ export function FieldEditor({
             <select
               className="w-full border rounded-md p-2"
               value={field.headingLevel || 'h2'}
-              onChange={(e) => onUpdate({ headingLevel: e.target.value as any })}
+              onChange={(e) => onUpdate({ headingLevel: e.target.value as 'h1' | 'h2' | 'h3' | 'h4' })}
             >
               <option value="h1">H1 - Main Title</option>
               <option value="h2">H2 - Section Title</option>
@@ -249,7 +249,7 @@ export function FieldEditor({
               <select
                 className="w-full border rounded-md p-2"
                 value={field.ratingIcon || 'star'}
-                onChange={(e) => onUpdate({ ratingIcon: e.target.value as any })}
+                onChange={(e) => onUpdate({ ratingIcon: e.target.value as 'star' | 'heart' | 'thumbsup' })}
               >
                 <option value="star">Star</option>
                 <option value="heart">Heart</option>
@@ -345,7 +345,7 @@ export function FieldEditor({
               <select
                 className="w-full border rounded-md p-2"
                 value={field.displayFormat || 'number'}
-                onChange={(e) => onUpdate({ displayFormat: e.target.value as any })}
+                onChange={(e) => onUpdate({ displayFormat: e.target.value as 'number' | 'currency' | 'percentage' })}
               >
                 <option value="number">Number</option>
                 <option value="currency">Currency</option>

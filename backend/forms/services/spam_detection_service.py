@@ -5,8 +5,7 @@ import logging
 import re
 from django.utils import timezone
 from datetime import timedelta
-from typing import Dict, Any, List
-import requests
+from typing import Dict, Any
 
 from forms.models_new_features import (
     SpamDetectionConfig, SpamDetectionLog, IPReputationCache
@@ -173,7 +172,7 @@ class SpamDetectionService:
             if re.search(pattern, all_text, re.IGNORECASE):
                 score += 20
                 matched = True
-                reasons.append(f'Custom pattern matched')
+                reasons.append('Custom pattern matched')
         
         # Check blacklisted emails
         for field_value in submission_data.values():
